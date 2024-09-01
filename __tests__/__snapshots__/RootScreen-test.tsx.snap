@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<RootIndex /> CustomText renders correctly 1`] = `
+<Text
+  style={
+    {
+      "color": "#FF8E01",
+    }
+  }
+>
+  Some text
+</Text>
+`;
