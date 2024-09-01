@@ -2,6 +2,8 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
+<img src="https://github.com/user-attachments/assets/dd9c8988-2f31-4dd6-b268-e98860ac3b4f" data-canonical-src="https://github.com/user-attachments/assets/dd9c8988-2f31-4dd6-b268-e98860ac3b4f" width="250" height="400" />
+
 ## Get started 🏁
 
 1. Install dependencies
@@ -43,6 +45,9 @@ This command will run the two unit test written in Homescreen.test.js file. Foll
 - [Tanstack-Query](https://tanstack.com/) for fetching data
 - [Zustand](https://zustand.docs.pmnd.rs/getting-started/introduction) for global state management (alternative to redux)
 - [Eas build](https://docs.expo.dev/build/setup/) for building the applicaiton.
+
+## ℹ️ API 
+- [OMDB](https://www.omdbapi.com/) used to fetch movies details
 
 ## Learn more
 
