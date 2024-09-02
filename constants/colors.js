@@ -1,3 +1,4 @@
+//gloabl colors
 const colors = {
   primary: "#161622",
   secondary: {

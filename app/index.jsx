@@ -20,8 +20,6 @@ export function AppName({ children }) {
 }
 
 const RootIndex = () => {
-  // const user = useAuthStore(state=>state.user)
-  // console.log(user)
 
   return (
     <SafeAreaView style={styles.container}>

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import colors from "../constants/colors";
 
 const FormField
- = ({title, value, handleChangeText, placeHolder}) => {
+ = ({title, handleChangeText, placeHolder}) => {
   const [showPassword, setShowPassword] = useState(false)
 
   return (
