@@ -57,7 +57,7 @@ This command will run the two unit test written in Homescreen.test.js file. Foll
 [click here to Follow through a video for app](https://drive.google.com/file/d/1aeFQFWvgk_sx0qqAtMV0UkyV15pKUb9g/view?usp=sharing)
 
 
-## ⬇️ Download apk
+## ⬇️ Download apk (new link to be added soon)
 [click here to download😀](https://expo.dev/accounts/ayushninja/projects/MovieMania/builds/cfe4a839-75a3-4957-a387-53e88c212a51)
 
 
