@@ -9,11 +9,11 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import useAuthStore from "@/store/authStore";
 
 import { images } from "@/constants";
 import CustomBotton from "@/components/customButton";
 import colors from "@/constants/colors";
-
 
 export function AppName({ children }) {
   return <Text style={{ color: colors.secondary[200] }}>{children}</Text>;
@@ -73,7 +73,6 @@ const RootIndex = () => {
           </Text>
           <CustomBotton
             title="Continue with Email"
-            // handlePress={() => router.push("/(tabs)/homeScreen")}
             handlePress={() => router.push("/(auth)")}
             textStyles=""
             containerStyles={styles.buttonSyles}

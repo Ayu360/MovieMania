@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#161622"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true
@@ -18,9 +18,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#161622"
-      },
-      "package": "com.ayushninja.MovieMania"
+        "backgroundColor": "#ffffff"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -32,14 +31,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "8d5b0c2d-fb6b-4a69-b640-aea1f1a777ce"
-      }
     }
   }
 }
