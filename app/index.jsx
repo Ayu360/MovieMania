@@ -73,7 +73,6 @@ const RootIndex = () => {
           </Text>
           <CustomBotton
             title="Continue with Email"
-            // handlePress={() => router.push("/(tabs)/homeScreen")}
             handlePress={() => router.push("/(auth)")}
             textStyles=""
             containerStyles={styles.buttonSyles}

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import SearchBar from "../../components/searchBar";
-import FlatlistView from "../../components/flatlist";
+import SearchBar from "../searchBar";
+import FlatlistView from "../flatlist";
 import { fetchMovies } from "../../api/fetchData";
 import { colors } from "../../constants";
 

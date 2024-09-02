@@ -1,3 +1,5 @@
+//Global Colours
+
 const colors = {
   primary: "#161622",
   secondary: {
