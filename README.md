@@ -1,3 +1,6 @@
+## Change comparitive to main: 
+- [LoadMore integrated and Fixed pagination](https://drive.google.com/file/d/1fbcp3_5VD54q64cL1McVZ6PEVuqPz2jX/view?usp=sharing)
+
 # Welcome to MovieMania Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
