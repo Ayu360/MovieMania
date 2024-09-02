@@ -33,7 +33,7 @@ export default function RootLayout(){
                     }/>
                     <Stack.Screen name="[movieId]" options={
                         {
-                            headerTitle: "MOVIELOGY",
+                            headerTitle: "MOVIEMANIA",
                             headerTitleAlign:"center",
                             headerTintColor:colors["gray"][100],
                             headerStyle: {

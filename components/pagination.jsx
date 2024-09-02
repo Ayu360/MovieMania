@@ -1,24 +1,46 @@
 import { View, TouchableOpacity, Image, StyleSheet } from 'react-native'
-import React from 'react'
+import React, { useRef } from 'react'
 import { icons } from '../constants'
 import useMoviesStore from '../store/moviesStore'
 
-const Pagination = ({handleforwardPagination, handlebackwardPagination}) => {
-    const initalIdx = useMoviesStore(state=>state.intialIdx)
-    const lastIdx = useMoviesStore(state=>state.lastIdx)
+const Pagination = ({handlePagination}) => {
     const items = useMoviesStore(state=>state.items)
+    const initialnIdx = useRef(0);
+    const lastIndx= useRef(5)
+
+    function left(){
+        if(initialnIdx.current===0){
+            return;
+        }
+
+        initialnIdx.current-=5;
+        const remainder = (lastIndx.current)%5
+        lastIndx.current -= remainder===0?5:remainder
+        handlePagination(initialnIdx.current,lastIndx.current)
+    }
+
+    function right(){
+        if(lastIndx.current===items){
+            return;
+        }
+
+        initialnIdx.current+=5;
+        lastIndx.current = Math.min(lastIndx.current+5, items)
+        handlePagination(initialnIdx.current,lastIndx.current)
+    }
+
     return (
     <View style={styles.container}>
-        <TouchableOpacity disabled={initalIdx===0}
-            onPress={handlebackwardPagination}
+        <TouchableOpacity disabled={initialnIdx===0}
+            onPress={left}
         >
             <Image source={icons.leftArrow}
                 resizeMode='contain'
                 style={{height:30, width:30}}
             />
         </TouchableOpacity>
-        <TouchableOpacity disabled={lastIdx===items}
-            onPress={handleforwardPagination}
+        <TouchableOpacity disabled={lastIndx===items}
+            onPress={right}
         >
             <Image source={icons.rightArrow}
                 resizeMode='contain'
