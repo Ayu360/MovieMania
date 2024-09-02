@@ -10,52 +10,9 @@ const favorites = () => {
     const getMovies = useMoviesStore((state)=>state.getMovies)
     const items = useMoviesStore(state=>state.items)
     const movies = useMoviesStore(state=>state.paginatedMovies)
-    const initialIdx = useRef(0);
-    const lastIdx= useRef(5)
 
-    function handleforwardPagination(){
-        getMovies(initialIdx.current,lastIdx.current)
-        initialIdx.current += 5
-        lastIdx.current+=5
-
-        if (initialIdx.current > items) {
-         initialIdx.current = items % 5;
-        } else if (initialIdx.current < 0) {
-            initialIdx.current = 0;
-        } else {
-            initialIdx.current = initialIdx.current;
-        }
-
-        if (lastIdx.current > items) {
-            lastIdx.current = items;
-          } else if (lastIdx.current < 0) {
-            lastIdx.current = 5;
-          } else {
-            lastIdx.current = lastIdx.current;
-          }
-
-        
-        
-    }
-    function handlebackwardPagination(){
-        getMovies(initialIdx.current,lastIdx.current)
-        initialIdx.current -= 5
-        lastIdx.current-=5
-        if (initialIdx.current > items) {
-            initialIdx.current = items % 5;
-           } else if (initialIdx.current < 0) {
-               initialIdx.current = 0;
-           } else {
-               initialIdx.current = initialIdx.current;
-           }
-   
-           if (lastIdx.current > items) {
-                lastIdx.current = items;
-            } else if (lastIdx.current < 0) {
-                lastIdx.current = 5;
-            } else {
-                lastIdx.current = lastIdx.current;
-            }
+    function handlePagination(first, last){
+        getMovies(first,last)
     }
 
     return (
@@ -71,9 +28,7 @@ const favorites = () => {
                     />
                     {
                         items>5 &&
-                        <Pagination handleforwardPagination={handleforwardPagination}
-                            handlebackwardPagination={handlebackwardPagination}
-                        />
+                        <Pagination handlePagination={handlePagination}/>
                     }
                 </>
             }

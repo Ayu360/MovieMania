@@ -3,8 +3,6 @@ import { create } from "zustand";
 const useMoviesStore = create((set, get) => ({
   movies: [],
   paginatedMovies: [],
-  intialIdx: 0,
-  lastIdx: 0,
   items: 0,
   addMovies: (movie) =>
     set((state) => {
@@ -52,8 +50,6 @@ const useMoviesStore = create((set, get) => ({
     set((state) => {
       return {
         paginatedMovies: state.movies.slice(initial, final),
-        intialIdx: initial,
-        lastIdx: final,
       };
     });
   },
