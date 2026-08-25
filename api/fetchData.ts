@@ -1,13 +1,13 @@
-//homeScreen
-export async function fetchMovies(query:string) {
-  const res = await fetch(`https://omdbapi.com/?apikey=10fd2219&${query}`);
+const OMDB_BASE = "https://omdbapi.com/?apikey=10fd2219";
+
+export async function fetchMovies(query: string, page: number = 1) {
+  const res = await fetch(`${OMDB_BASE}&${query}&page=${page}`);
   const result = await res.json();
   return result;
 }
 
-//[movieId]
-export async function fetchSelectedMovie(id:string) {
-  let res = await fetch(`https://omdbapi.com/?apikey=10fd2219&i=${id}`);
-  let data = await res.json();
+export async function fetchSelectedMovie(id: string) {
+  const res = await fetch(`${OMDB_BASE}&i=${id}`);
+  const data = await res.json();
   return data;
 }

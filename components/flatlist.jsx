@@ -1,85 +1,95 @@
-import { View, Text, Image, StyleSheet } from 'react-native'
 import React from 'react'
-import { colors } from '../constants';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { router } from 'expo-router';
+import { View, Text, Image, StyleSheet, Pressable } from 'react-native'
+import { router } from 'expo-router'
+import { colors } from '../constants'
 
-const DEFAULT_IMAGE="https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg"
+const DEFAULT_POSTER = 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg'
 
-function shortenString(inputString) {
-    if (inputString.length > 24) {
-      return inputString.substring(0, 24) + "..";
-    } else {
-      return inputString;
-    }
+const TYPE_LABEL = {
+  movie: 'Movie',
+  series: 'Series',
+  episode: 'Episode',
+  game: 'Game',
 }
 
-import {icons} from '../constants';
+const PosterTile = ({ item }) => {
+  const poster = !item.Poster || item.Poster === 'N/A' ? DEFAULT_POSTER : item.Poster
+  const type = TYPE_LABEL[item.Type] ?? item.Type
 
-
-
-const FlatlistView = ({item}) => {
   return (
-    <View style={styles.container}>
-        <Image
-            source={{uri:item.Poster==="N/A"? DEFAULT_IMAGE : item.Poster}}
-            style={styles.image}
-            resizeMode='contain'
-        />
-        <View style={styles.contentSection}>
-            <Text style={styles.heading}>
-                {
-                    shortenString(item.Title)
-                }
-            </Text>
-            <Text style={styles.year}>ℹ️   {item.Year}</Text>
-        </View>
-        <TouchableOpacity onPress={()=>{
-            router.navigate({
-                pathname: '[movieId]',
-                params: { id: item.imdbID }
-            })
-        }}>
-            <Image
-                source={icons.rightArrow}
-                style={{width:20, height:20}}
-                resizeMode='contain'
-            />
-        </TouchableOpacity>
-    </View>
+    <Pressable
+      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      onPress={() =>
+        router.navigate({ pathname: '[movieId]', params: { id: item.imdbID } })
+      }
+    >
+      <View style={styles.posterWrap}>
+        <Image source={{ uri: poster }} style={styles.poster} resizeMode="cover" />
+      </View>
+      <Text style={styles.title} numberOfLines={2}>
+        {item.Title}
+      </Text>
+      <View style={styles.metaRow}>
+        <Text style={styles.year}>{item.Year}</Text>
+        {type ? (
+          <>
+            <Text style={styles.dot}>·</Text>
+            <Text style={styles.type}>{type}</Text>
+          </>
+        ) : null}
+      </View>
+    </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
-    container: {
-        height:100,
-        width:"100%",
-        flexDirection:"row",
-        backgroundColor:colors.secondary[200],
-        marginBottom:10,
-        borderRadius:10,
-        padding: 10
-        
-    },
-    image:{
-        height:80,
-        width:80,
-        borderWidth:2,
-        borderBlockColor:"black"
-    },
-    contentSection:{
-        width:"70%",
-        gap:10
-    },
-    heading:{
-        fontSize:20,
-        fontWeight:"600",
-    },
-    year:{
-        fontSize:16,
-        color:colors.primary,
-        fontWeight:"500",
-    }
+  container: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  posterWrap: {
+    aspectRatio: 2 / 3,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  poster: {
+    width: '100%',
+    height: '100%',
+  },
+  title: {
+    marginTop: 8,
+    color: colors.text.DEFAULT,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  year: {
+    color: colors.text.muted,
+    fontSize: 12,
+  },
+  dot: {
+    color: colors.text.dim,
+    fontSize: 12,
+  },
+  type: {
+    color: colors.accent.orange,
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
 })
 
-export default FlatlistView
+export default PosterTile

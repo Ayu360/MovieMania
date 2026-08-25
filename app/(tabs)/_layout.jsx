@@ -1,64 +1,33 @@
-import { router, Tabs } from 'expo-router';
-import {colors, icons} from '@/constants'
-import { Image, TouchableOpacity, Text } from 'react-native';
-import useAuthStore from '@/store/authStore'
+import { NativeTabs } from 'expo-router/unstable-native-tabs'
+import { colors, icons } from '@/constants'
 
-function Layout(){
-    const user = useAuthStore(state=>state.user)
-    const setUser = useAuthStore(state=>state.setUser)
-
-    return <Tabs screenOptions={{
-        tabBarActiveTintColor:colors["secondary"].DEFAULT,
-        tabBarActiveBackgroundColor: colors["black"][200],
-        tabBarInactiveTintColor:colors["gray"][200],
-        tabBarStyle:{
-            backgroundColor:colors.primary,
-            height:60,
-            paddingBottom:10
-        },
-        tabBarIconStyle: { display: "none" },
-        tabBarLabelStyle: {
-            fontWeight: "700",
-            fontSize: 15,
-        },
-    }}>
-        <Tabs.Screen name="homeScreen" options={
-            {
-                headerTitle: "MOVIELOGY",
-                headerTitleAlign:"center",
-                headerTintColor:colors["gray"][100],
-                headerStyle: {
-                    backgroundColor: colors.primary
-                },
-                headerRight: ()=>{
-                    return (
-                    <TouchableOpacity
-                        onPress={()=>{
-                            router.dismissAll("/")
-                            setUser({...user, isLoggedIn:false})
-                        }}
-                        
-                    >
-                    <Image
-                            source={icons.logout}
-                            style={{height:20, width:30}}
-                            resizeMode='center'
-                        />
-                    </TouchableOpacity>)
-                }
-            }
-        }/>
-        <Tabs.Screen name="favorites" options={
-            {
-                headerTitle: "Favorites",
-                headerTitleAlign:"center",
-                headerTintColor:colors["gray"][100],
-                headerStyle: {
-                    backgroundColor: colors.primary
-                },
-            }
-        }/>
-    </Tabs>
+export default function Layout() {
+  return (
+    <NativeTabs
+      backgroundColor={colors.surface}
+      blurEffect="systemChromeMaterialDark"
+      tintColor={colors.accent.orange}
+      iconColor={{ default: colors.text.muted, selected: colors.accent.orange }}
+      labelStyle={{
+        default: { color: colors.text.muted, fontSize: 11 },
+        selected: { color: colors.accent.orange, fontSize: 11, fontWeight: '600' },
+      }}
+      disableTransparentOnScrollEdge
+    >
+      <NativeTabs.Trigger name="homeScreen">
+        <NativeTabs.Trigger.Label>Discover</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'film', selected: 'film.fill' }}
+          src={icons.search}
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="favorites">
+        <NativeTabs.Trigger.Label>Watchlist</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'bookmark', selected: 'bookmark.fill' }}
+          src={icons.rightArrow}
+        />
+      </NativeTabs.Trigger>
+    </NativeTabs>
+  )
 }
-
-export default Layout;
