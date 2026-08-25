@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  Animated,
   Image,
   Pressable,
   StatusBar,
@@ -8,6 +7,13 @@ import {
   Text,
   View,
 } from 'react-native'
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
@@ -26,7 +32,7 @@ const MAX_PULL_SCALE = 1.8
 const SelectedMovie = () => {
   const { id } = useLocalSearchParams()
   const insets = useSafeAreaInsets()
-  const scrollY = useRef(new Animated.Value(0)).current
+  const scrollY = useSharedValue(0)
 
   const { data, status, error } = useQuery({
     queryKey: ['movie', id],
@@ -58,22 +64,31 @@ const SelectedMovie = () => {
     }
   }
 
-  // Parallax: backdrop translates UP at 0.3x speed when scrolling up (classic parallax feel).
-  // Pull-down: translateY offsets by half the stretch growth so the top edge stays pinned
-  // (otherwise scale-from-center pushes the top out of view).
-  const backdropTranslateY = scrollY.interpolate({
-    inputRange: [-HERO_HEIGHT, 0, HERO_HEIGHT],
-    outputRange: [
-      (HERO_HEIGHT * (MAX_PULL_SCALE - 1)) / 2, // anchor top under max stretch
-      0,
-      -HERO_HEIGHT * 0.3, // parallax up on scroll
-    ],
-    extrapolateRight: 'extend',
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.value = e.contentOffset.y
+    },
   })
-  const backdropScale = scrollY.interpolate({
-    inputRange: [-HERO_HEIGHT, 0],
-    outputRange: [MAX_PULL_SCALE, 1],
-    extrapolateRight: 'clamp',
+
+  // Parallax + top-anchored pull stretch computed on the UI thread.
+  const backdropStyle = useAnimatedStyle(() => {
+    const translateY = interpolate(
+      scrollY.value,
+      [-HERO_HEIGHT, 0, HERO_HEIGHT],
+      [
+        (HERO_HEIGHT * (MAX_PULL_SCALE - 1)) / 2, // anchor top under max pull-stretch
+        0,
+        -HERO_HEIGHT * 0.3, // parallax up on scroll
+      ],
+      Extrapolation.EXTEND,
+    )
+    const scale = interpolate(
+      scrollY.value,
+      [-HERO_HEIGHT, 0],
+      [MAX_PULL_SCALE, 1],
+      { extrapolateLeft: Extrapolation.EXTEND, extrapolateRight: Extrapolation.CLAMP },
+    )
+    return { transform: [{ translateY }, { scale }] }
   })
 
   return (
@@ -94,9 +109,8 @@ const SelectedMovie = () => {
         <MovieContent
           data={data}
           insets={insets}
-          scrollY={scrollY}
-          backdropTranslateY={backdropTranslateY}
-          backdropScale={backdropScale}
+          scrollHandler={scrollHandler}
+          backdropStyle={backdropStyle}
           isPresent={isPresent}
           onToggle={handleToggleWatchlist}
         />
@@ -108,9 +122,8 @@ const SelectedMovie = () => {
 const MovieContent = ({
   data,
   insets,
-  scrollY,
-  backdropTranslateY,
-  backdropScale,
+  scrollHandler,
+  backdropStyle,
   isPresent,
   onToggle,
 }) => {
@@ -125,10 +138,7 @@ const MovieContent = ({
           source={{ uri: poster }}
           resizeMode="cover"
           blurRadius={30}
-          style={[
-            styles.backdrop,
-            { transform: [{ translateY: backdropTranslateY }, { scale: backdropScale }] },
-          ]}
+          style={[styles.backdrop, backdropStyle]}
         />
         <View style={styles.backdropDarken} />
         <View style={styles.backdropGradient} />
@@ -139,10 +149,7 @@ const MovieContent = ({
         contentContainerStyle={{ paddingBottom: 48 + insets.bottom }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
+        onScroll={scrollHandler}
       >
         <View style={[styles.heroSpacer, { height: HERO_HEIGHT - 140 }]} />
 
