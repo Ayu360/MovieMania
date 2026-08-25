@@ -1,8 +1,6 @@
-import { router, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { colors } from "../constants";
-import { TouchableOpacity, Text } from "react-native";
 
 
 const queryClient = new QueryClient()
@@ -31,21 +29,7 @@ export default function RootLayout(){
                             headerShown:false
                         }
                     }/>
-                    <Stack.Screen name="[movieId]" options={
-                        {
-                            headerTitle: "MOVIELOGY",
-                            headerTitleAlign:"center",
-                            headerTintColor:colors["gray"][100],
-                            headerStyle: {
-                                backgroundColor: colors.primary
-                            },
-                            headerLeft:()=>{
-                                return <TouchableOpacity onPress={()=>router.back()}>
-                                    <Text style={{color:"white"}}>Back</Text>
-                                </TouchableOpacity>    
-                            }
-                        }
-                    }/>
+                    <Stack.Screen name="[movieId]" options={{ headerShown: false }}/>
 
                 </Stack>
             </QueryClientProvider>

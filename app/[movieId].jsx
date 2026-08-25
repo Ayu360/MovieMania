@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
+  Animated,
   Image,
   Pressable,
-  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchSelectedMovie } from '../api/fetchData'
@@ -17,10 +19,14 @@ import useMoviesStore from '../store/moviesStore'
 const DEFAULT_POSTER =
   'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg'
 
-const HERO_HEIGHT = 320
+const HERO_HEIGHT = 380
+const BACKDROP_OVERFLOW = 220 // extra image outside the visible hero, gives room for parallax + stretch
+const MAX_PULL_SCALE = 1.8
 
 const SelectedMovie = () => {
   const { id } = useLocalSearchParams()
+  const insets = useSafeAreaInsets()
+  const scrollY = useRef(new Animated.Value(0)).current
 
   const { data, status, error } = useQuery({
     queryKey: ['movie', id],
@@ -29,6 +35,7 @@ const SelectedMovie = () => {
   })
 
   const addMovies = useMoviesStore((s) => s.addMovies)
+  const removeMovie = useMoviesStore((s) => s.removeMovie)
   const checkMovie = useMoviesStore((s) => s.checkMovie)
   const [isPresent, setIsPresent] = useState(false)
 
@@ -40,141 +47,212 @@ const SelectedMovie = () => {
     }
   }, [data, checkMovie])
 
-  const handleAddMovie = () => {
-    if (!isPresent && data?.Response === 'True') {
+  const handleToggleWatchlist = () => {
+    if (data?.Response !== 'True') return
+    if (isPresent) {
+      removeMovie(data)
+      setIsPresent(false)
+    } else {
       addMovies(data)
       setIsPresent(true)
     }
   }
 
-  if (status === 'pending') return <MovieDetailSkeleton />
-  if (status === 'error') {
-    return (
-      <ErrorState
-        title="Couldn't load movie"
-        subtitle={error?.message ?? 'Try again in a moment.'}
-      />
-    )
-  }
-  if (data?.Response === 'False') {
-    return (
-      <ErrorState title="Movie not found" subtitle={data?.Error ?? 'Unknown id.'} />
-    )
-  }
+  // Parallax: backdrop translates UP at 0.3x speed when scrolling up (classic parallax feel).
+  // Pull-down: translateY offsets by half the stretch growth so the top edge stays pinned
+  // (otherwise scale-from-center pushes the top out of view).
+  const backdropTranslateY = scrollY.interpolate({
+    inputRange: [-HERO_HEIGHT, 0, HERO_HEIGHT],
+    outputRange: [
+      (HERO_HEIGHT * (MAX_PULL_SCALE - 1)) / 2, // anchor top under max stretch
+      0,
+      -HERO_HEIGHT * 0.3, // parallax up on scroll
+    ],
+    extrapolateRight: 'extend',
+  })
+  const backdropScale = scrollY.interpolate({
+    inputRange: [-HERO_HEIGHT, 0],
+    outputRange: [MAX_PULL_SCALE, 1],
+    extrapolateRight: 'clamp',
+  })
 
+  return (
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <FloatingBackButton topInset={insets.top} />
+
+      {status === 'pending' ? (
+        <MovieDetailSkeleton />
+      ) : status === 'error' ? (
+        <ErrorState
+          title="Couldn't load movie"
+          subtitle={error?.message ?? 'Try again in a moment.'}
+        />
+      ) : data?.Response === 'False' ? (
+        <ErrorState title="Movie not found" subtitle={data?.Error ?? 'Unknown id.'} />
+      ) : (
+        <MovieContent
+          data={data}
+          insets={insets}
+          scrollY={scrollY}
+          backdropTranslateY={backdropTranslateY}
+          backdropScale={backdropScale}
+          isPresent={isPresent}
+          onToggle={handleToggleWatchlist}
+        />
+      )}
+    </View>
+  )
+}
+
+const MovieContent = ({
+  data,
+  insets,
+  scrollY,
+  backdropTranslateY,
+  backdropScale,
+  isPresent,
+  onToggle,
+}) => {
   const poster = data.Poster === 'N/A' ? DEFAULT_POSTER : data.Poster
   const genres = (data.Genre ?? '').split(',').map((g) => g.trim()).filter(Boolean)
   const type = data.Type ? data.Type[0].toUpperCase() + data.Type.slice(1) : null
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.hero}>
-        <Image
+    <>
+      <View pointerEvents="none" style={styles.heroClip}>
+        <Animated.Image
           source={{ uri: poster }}
-          style={styles.backdrop}
           resizeMode="cover"
-          blurRadius={20}
+          blurRadius={30}
+          style={[
+            styles.backdrop,
+            { transform: [{ translateY: backdropTranslateY }, { scale: backdropScale }] },
+          ]}
         />
-        <View style={styles.backdropOverlay} />
+        <View style={styles.backdropDarken} />
+        <View style={styles.backdropGradient} />
       </View>
 
-      <View style={styles.headerRow}>
-        <Image
-          source={{ uri: poster }}
-          style={styles.poster}
-          resizeMode="cover"
-        />
-        <View style={styles.headerText}>
-          <Text style={styles.title} numberOfLines={3}>
-            {data.Title}
-          </Text>
-          <View style={styles.metaRow}>
-            {data.Year ? <Text style={styles.metaText}>{data.Year}</Text> : null}
-            {data.Runtime && data.Runtime !== 'N/A' ? (
-              <>
-                <Text style={styles.metaDot}>·</Text>
-                <Text style={styles.metaText}>{data.Runtime}</Text>
-              </>
-            ) : null}
-            {type ? (
-              <>
-                <Text style={styles.metaDot}>·</Text>
-                <Text style={styles.metaType}>{type}</Text>
-              </>
+      <Animated.ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 48 + insets.bottom }}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+      >
+        <View style={[styles.heroSpacer, { height: HERO_HEIGHT - 140 }]} />
+
+        <View style={styles.headerRow}>
+          <Image source={{ uri: poster }} style={styles.poster} resizeMode="cover" />
+          <View style={styles.headerText}>
+            <Text style={styles.title} numberOfLines={3}>
+              {data.Title}
+            </Text>
+            <View style={styles.metaRow}>
+              {data.Year ? <Text style={styles.metaText}>{data.Year}</Text> : null}
+              {data.Runtime && data.Runtime !== 'N/A' ? (
+                <>
+                  <Text style={styles.metaDot}>·</Text>
+                  <Text style={styles.metaText}>{data.Runtime}</Text>
+                </>
+              ) : null}
+              {type ? (
+                <>
+                  <Text style={styles.metaDot}>·</Text>
+                  <Text style={styles.metaType}>{type}</Text>
+                </>
+              ) : null}
+            </View>
+            {data.imdbRating && data.imdbRating !== 'N/A' ? (
+              <View style={styles.ratingPill}>
+                <Text style={styles.ratingStar}>★</Text>
+                <Text style={styles.ratingValue}>{data.imdbRating}</Text>
+                <Text style={styles.ratingScale}>/ 10</Text>
+                <Text style={styles.ratingSource}>IMDb</Text>
+              </View>
             ) : null}
           </View>
-          {data.imdbRating && data.imdbRating !== 'N/A' ? (
-            <View style={styles.ratingPill}>
-              <Text style={styles.ratingStar}>★</Text>
-              <Text style={styles.ratingValue}>{data.imdbRating}</Text>
-              <Text style={styles.ratingScale}>/ 10</Text>
-              <Text style={styles.ratingSource}>IMDb</Text>
-            </View>
-          ) : null}
         </View>
-      </View>
 
-      {genres.length > 0 ? (
-        <View style={styles.chipsRow}>
-          {genres.map((g) => (
-            <View key={g} style={styles.chip}>
-              <Text style={styles.chipText}>{g}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
+        {genres.length > 0 ? (
+          <View style={styles.chipsRow}>
+            {genres.map((g) => (
+              <View key={g} style={styles.chip}>
+                <Text style={styles.chipText}>{g}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
-      {data.Plot && data.Plot !== 'N/A' ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Plot</Text>
-          <Text style={styles.plot}>{data.Plot}</Text>
-        </View>
-      ) : null}
+        {data.Plot && data.Plot !== 'N/A' ? (
+          <Section title="Plot" body={data.Plot} plot />
+        ) : null}
+        {data.Director && data.Director !== 'N/A' ? (
+          <Section title="Director" body={data.Director} />
+        ) : null}
+        {data.Actors && data.Actors !== 'N/A' ? (
+          <Section title="Cast" body={data.Actors} />
+        ) : null}
+        {data.Released && data.Released !== 'N/A' ? (
+          <Section title="Released" body={data.Released} />
+        ) : null}
 
-      {data.Director && data.Director !== 'N/A' ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Director</Text>
-          <Text style={styles.sectionBody}>{data.Director}</Text>
-        </View>
-      ) : null}
-
-      {data.Actors && data.Actors !== 'N/A' ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cast</Text>
-          <Text style={styles.sectionBody}>{data.Actors}</Text>
-        </View>
-      ) : null}
-
-      {data.Released && data.Released !== 'N/A' ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Released</Text>
-          <Text style={styles.sectionBody}>{data.Released}</Text>
-        </View>
-      ) : null}
-
-      <Pressable
-        onPress={handleAddMovie}
-        disabled={isPresent}
-        style={({ pressed }) => [
-          styles.actionBtn,
-          isPresent && styles.actionBtnAdded,
-          pressed && !isPresent && styles.actionBtnPressed,
-        ]}
-      >
-        <Text style={[styles.actionBtnText, isPresent && styles.actionBtnTextAdded]}>
-          {isPresent ? '✓ In your Watchlist' : '+ Add to Watchlist'}
-        </Text>
-      </Pressable>
-    </ScrollView>
+        <Pressable
+          onPress={onToggle}
+          style={({ pressed }) => [
+            styles.actionBtn,
+            isPresent && styles.actionBtnAdded,
+            pressed && styles.actionBtnPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isPresent ? 'Remove from Watchlist' : 'Add to Watchlist'
+          }
+        >
+          <Text style={[styles.actionBtnText, isPresent && styles.actionBtnTextAdded]}>
+            {isPresent ? '✓ In Watchlist  ·  Tap to remove' : '+ Add to Watchlist'}
+          </Text>
+        </Pressable>
+      </Animated.ScrollView>
+    </>
   )
 }
 
+const Section = ({ title, body, plot }) => (
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={plot ? styles.plot : styles.sectionBody}>{body}</Text>
+  </View>
+)
+
+const FloatingBackButton = ({ topInset }) => (
+  <Pressable
+    onPress={() => router.back()}
+    hitSlop={12}
+    style={({ pressed }) => [
+      styles.backBtn,
+      { top: topInset + 8 },
+      pressed && { opacity: 0.6 },
+    ]}
+    accessibilityRole="button"
+    accessibilityLabel="Back"
+  >
+    <Text style={styles.backChevron}>‹</Text>
+  </Pressable>
+)
+
 const MovieDetailSkeleton = () => (
-  <View style={styles.container}>
-    <View style={styles.hero}>
+  <View style={styles.root}>
+    <View style={styles.heroClip}>
       <View style={[styles.backdrop, styles.skeletonBg]} />
-      <View style={styles.backdropOverlay} />
+      <View style={styles.backdropDarken} />
+      <View style={styles.backdropGradient} />
     </View>
+    <View style={{ height: HERO_HEIGHT - 140 }} />
     <View style={styles.headerRow}>
       <View style={[styles.poster, styles.skeletonBg]} />
       <View style={styles.headerText}>
@@ -185,10 +263,7 @@ const MovieDetailSkeleton = () => (
     </View>
     <View style={styles.chipsRow}>
       {[80, 100, 70].map((w, i) => (
-        <View
-          key={i}
-          style={[styles.skeletonLine, { width: w, height: 26, borderRadius: 13 }]}
-        />
+        <View key={i} style={[styles.skeletonLine, { width: w, height: 26, borderRadius: 13 }]} />
       ))}
     </View>
     <View style={styles.section}>
@@ -198,51 +273,60 @@ const MovieDetailSkeleton = () => (
       <View style={[styles.skeletonLine, { width: '90%', height: 12, marginTop: 8 }]} />
       <View style={[styles.skeletonLine, { width: '60%', height: 12, marginTop: 8 }]} />
     </View>
-    <View style={styles.section}>
-      <View style={[styles.skeletonLine, { width: 80, height: 16 }]} />
-      <View style={[styles.skeletonLine, { width: '70%', height: 12, marginTop: 12 }]} />
-    </View>
   </View>
 )
 
 const ErrorState = ({ title, subtitle }) => (
-  <View style={[styles.container, styles.errorContainer]}>
+  <View style={[styles.root, styles.errorContainer]}>
     <Text style={styles.errorTitle}>{title}</Text>
     <Text style={styles.errorSubtitle}>{subtitle}</Text>
   </View>
 )
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
     backgroundColor: colors.primary,
   },
-  content: {
-    paddingBottom: 40,
+  scroll: {
+    flex: 1,
   },
-  hero: {
-    height: HERO_HEIGHT,
-    width: '100%',
+  heroClip: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
+    height: HERO_HEIGHT,
+    overflow: 'hidden',
+    backgroundColor: colors.primary,
   },
   backdrop: {
-    width: '100%',
-    height: '100%',
-    opacity: 0.5,
+    position: 'absolute',
+    top: -BACKDROP_OVERFLOW / 2,
+    left: 0,
+    right: 0,
+    height: HERO_HEIGHT + BACKDROP_OVERFLOW,
   },
-  backdropOverlay: {
+  backdropDarken: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.primary,
-    opacity: 0.55,
+    opacity: 0.35,
+  },
+  backdropGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: HERO_HEIGHT,
+    experimental_backgroundImage: `linear-gradient(to bottom, rgba(20, 24, 28, 0) 0%, rgba(20, 24, 28, 0.6) 55%, ${colors.primary} 100%)`,
+  },
+  heroSpacer: {
+    backgroundColor: 'transparent',
   },
   headerRow: {
     flexDirection: 'row',
     gap: 16,
     paddingHorizontal: 20,
-    paddingTop: HERO_HEIGHT - 190,
     marginBottom: 20,
   },
   poster: {
@@ -386,6 +470,27 @@ const styles = StyleSheet.create({
   },
   actionBtnTextAdded: {
     color: colors.accent.green,
+  },
+  backBtn: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(20, 24, 28, 0.55)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backChevron: {
+    color: colors.text.DEFAULT,
+    fontSize: 28,
+    lineHeight: 30,
+    fontWeight: '400',
+    marginTop: -2,
+    marginLeft: -2,
   },
   skeletonBg: {
     backgroundColor: colors.surface,

@@ -4,15 +4,14 @@ import { colors, icons } from '@/constants'
 export default function Layout() {
   return (
     <NativeTabs
-      backgroundColor={colors.surface}
-      blurEffect="systemChromeMaterialDark"
       tintColor={colors.accent.orange}
       iconColor={{ default: colors.text.muted, selected: colors.accent.orange }}
       labelStyle={{
-        default: { color: colors.text.muted, fontSize: 11 },
-        selected: { color: colors.accent.orange, fontSize: 11, fontWeight: '600' },
+        default: { color: colors.text.muted, fontSize: 12, fontWeight: '600' },
+        selected: { color: colors.accent.orange, fontSize: 12, fontWeight: '700' },
       }}
-      disableTransparentOnScrollEdge
+      minimizeBehavior="onScrollDown"
+      shadowColor="transparent"
     >
       <NativeTabs.Trigger name="homeScreen">
         <NativeTabs.Trigger.Label>Discover</NativeTabs.Trigger.Label>
