@@ -1,64 +1,108 @@
-import { router, Tabs } from 'expo-router';
-import {colors, icons} from '@/constants'
-import { Image, TouchableOpacity, Text } from 'react-native';
-import useAuthStore from '@/store/authStore'
+import { Tabs } from 'expo-router'
+import { StyleSheet, Text, View } from 'react-native'
+import { BlurView } from 'expo-blur'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { colors } from '@/constants'
 
-function Layout(){
-    const user = useAuthStore(state=>state.user)
-    const setUser = useAuthStore(state=>state.setUser)
+const TabIcon = ({ emoji, focused }) => (
+  <Text style={[styles.icon, focused && styles.iconFocused]}>{emoji}</Text>
+)
 
-    return <Tabs screenOptions={{
-        tabBarActiveTintColor:colors["secondary"].DEFAULT,
-        tabBarActiveBackgroundColor: colors["black"][200],
-        tabBarInactiveTintColor:colors["gray"][200],
-        tabBarStyle:{
-            backgroundColor:colors.primary,
-            height:60,
-            paddingBottom:10
+// Real frosted-glass tab bar: a BlurView renders the material, a subtle dark
+// tint on top keeps text readable, and a hairline top border defines the edge.
+const TabBarBackground = () => (
+  <View style={styles.tabBarBgWrap}>
+    <BlurView tint="dark" intensity={70} style={StyleSheet.absoluteFill} />
+    <View style={styles.tabBarTint} />
+    <View style={styles.tabBarBorder} />
+  </View>
+)
+
+export default function TabsLayout() {
+  const insets = useSafeAreaInsets()
+  const bottomPad = insets.bottom || 12
+
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.accent.orange,
+        tabBarInactiveTintColor: colors.text.muted,
+        tabBarShowLabel: true,
+        tabBarBackground: TabBarBackground,
+        tabBarStyle: {
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 56 + bottomPad,
+          paddingTop: 8,
+          paddingBottom: bottomPad,
+          borderTopWidth: 0,
+          backgroundColor: 'transparent',
+          elevation: 0,
         },
-        tabBarIconStyle: { display: "none" },
-        tabBarLabelStyle: {
-            fontWeight: "700",
-            fontSize: 15,
-        },
-    }}>
-        <Tabs.Screen name="homeScreen" options={
-            {
-                headerTitle: "MOVIELOGY",
-                headerTitleAlign:"center",
-                headerTintColor:colors["gray"][100],
-                headerStyle: {
-                    backgroundColor: colors.primary
-                },
-                headerRight: ()=>{
-                    return (
-                    <TouchableOpacity
-                        onPress={()=>{
-                            router.dismissAll("/")
-                            setUser({...user, isLoggedIn:false})
-                        }}
-                        
-                    >
-                    <Image
-                            source={icons.logout}
-                            style={{height:20, width:30}}
-                            resizeMode='center'
-                        />
-                    </TouchableOpacity>)
-                }
-            }
-        }/>
-        <Tabs.Screen name="favorites" options={
-            {
-                headerTitle: "Favorites",
-                headerTitleAlign:"center",
-                headerTintColor:colors["gray"][100],
-                headerStyle: {
-                    backgroundColor: colors.primary
-                },
-            }
-        }/>
+        tabBarLabelStyle: styles.label,
+        tabBarItemStyle: styles.item,
+        sceneStyle: { backgroundColor: colors.primary },
+      }}
+    >
+      <Tabs.Screen
+        name="homeScreen"
+        options={{
+          title: 'Discover',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🎬" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: 'Watchlist',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🔖" focused={focused} />,
+        }}
+      />
     </Tabs>
+  )
 }
 
-export default Layout;
+const styles = StyleSheet.create({
+  tabBarBgWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
+  tabBarTint: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(20, 24, 28, 0.35)',
+  },
+  tabBarBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  item: {
+    paddingTop: 2,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  icon: {
+    fontSize: 22,
+    opacity: 0.55,
+  },
+  iconFocused: {
+    opacity: 1,
+  },
+})

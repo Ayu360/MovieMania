@@ -1,151 +1,181 @@
-import { View, Text, StyleSheet, Alert, ScrollView, Image } from 'react-native'
-import { Link } from 'expo-router';
-import React, { useState } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context';
-import useAuthStore from '../../store/authStore';
-import { router } from 'expo-router';
-import FormField from '../../components/formField';
+import { useRef, useState } from 'react'
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Link, router } from 'expo-router'
 
-
-import colors from '../../constants/colors'
-import { images } from '../../constants'
+import useAuthStore from '../../store/authStore'
+import FormField from '../../components/formField'
 import CustomButton from '../../components/customButton'
+import { colors, images } from '../../constants'
 
 function validateEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return regex.test(email)
 }
 
 const SignIn = () => {
-  const [newUser, setNewUser] = useState({
-    email:null,
-    userName:null,
-    password:null,
-  })
-  const setUser = useAuthStore((state)=>state.setUser)
+  const setUser = useAuthStore((s) => s.setUser)
+  const [form, setForm] = useState({ email: '', userName: '', password: '' })
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit(){
-    if(!newUser.email && !newUser.userName && !newUser.password  ) {
-      Alert.alert("Incomplete Details", "Please fill all the details")
-      return false;
+  const userRef = useRef(null)
+  const passRef = useRef(null)
+
+  const update = (key) => (value) => setForm((prev) => ({ ...prev, [key]: value }))
+
+  const handleSubmit = () => {
+    if (!form.email.trim() || !form.userName.trim() || !form.password.trim()) {
+      Alert.alert('Incomplete details', 'Please fill in all fields.')
+      return
     }
-
-    if(!validateEmail(newUser.email)){
-      Alert.alert("Email invalid", "Please enter valid email")
-      return false;
+    if (!validateEmail(form.email.trim())) {
+      Alert.alert('Invalid email', 'Please enter a valid email address.')
+      return
     }
-
-    const userDetails={
-      ...newUser,
-      isLoggedIn:true
-    }
-
-    setUser(userDetails)
-    return true;
+    setSubmitting(true)
+    setUser({ ...form, isLoggedIn: true })
+    router.replace('/(tabs)/homeScreen')
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-    <ScrollView contentContainerStyle={{height:"100%"}}>
-      <View style={styles.heroSection}>
-        <View>
-          <Image 
-            source={images.logo}
-            style={styles.logo}
-            resizeMode='contain'
-          />
-          <Text style={{color:colors["gray"][100], fontSize:20}} >Log In to MovieMania</Text>
-        </View>
-        <View style={{width:"100%", gap:20}}>
-          <FormField 
-            title="Email" 
-            placeholder="Enter your email" 
-            handleChangeText={(e)=>setNewUser({...newUser,email:e})}
-            />
-
-          <FormField 
-            title="User" 
-            placeholder="Enter your user name" 
-            handleChangeText={(e)=>setNewUser({...newUser,userName:e})}
-            />
-
-          <FormField 
-            title="Password" 
-            placeholder="Enter your password" 
-            handleChangeText={(e)=>setNewUser({...newUser,password:e})}
-            />
-
-        </View>
-        <View style={{width:"100%"}}>
-          <CustomButton
-            title='Get-IN'
-            handlePress={()=>{
-              const res = handleSubmit();
-              if(res) router.replace("(tabs)/homeScreen")
-            }}
-            textStyles='' 
-            isLoading={false}  
-            containerStyles={styles.buttonSyles}
-            />
-          
-
-          <View style={styles.footer}>
-            <Text style={styles.footerIntro}>
-              Don't want to continue?
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Image source={images.logo} style={styles.logo} resizeMode="contain" />
+            <Text style={styles.h1}>Welcome back</Text>
+            <Text style={styles.subtitle}>
+              Sign in to save movies to your Watchlist.
             </Text>
-            <Link href="../" replace style={styles.footerLink}>Main Screen</Link>
           </View>
-        </View>
-      </View>
-    </ScrollView>
+
+          <View style={styles.fields}>
+            <FormField
+              label="Email"
+              value={form.email}
+              placeholder="you@example.com"
+              handleChangeText={update('email')}
+              keyboardType="email-address"
+              autoComplete="email"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => userRef.current?.focus()}
+            />
+            <FormField
+              ref={userRef}
+              label="Username"
+              value={form.userName}
+              placeholder="What should we call you?"
+              handleChangeText={update('userName')}
+              autoComplete="username"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => passRef.current?.focus()}
+            />
+            <FormField
+              ref={passRef}
+              label="Password"
+              value={form.password}
+              placeholder="At least 8 characters"
+              handleChangeText={update('password')}
+              secureTextEntry
+              autoComplete="current-password"
+              returnKeyType="go"
+              onSubmitEditing={handleSubmit}
+            />
+          </View>
+
+          <View style={styles.actions}>
+            <CustomButton
+              title="Sign in"
+              handlePress={handleSubmit}
+              isLoading={submitting}
+            />
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Not now?</Text>
+              <Link href="../" replace style={styles.footerLink}>
+                Back to Home
+              </Link>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container:{
-    backgroundColor:colors["primary"],
-    height:"100%",
-    padding:4
+  container: {
+    flex: 1,
+    backgroundColor: colors.primary,
   },
-  heroSection:{
-    width:"100%",
-    paddingHorizontal:4,
-    marginVertical:6,
-    minHeight:"85%",
-    justifyContent:"space-around",
-    gap:10
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
   },
-  logo:{
-    width:"60%",
-    height:84
+  header: {
+    alignItems: 'flex-start',
+    paddingTop: 20,
+    paddingBottom: 32,
+    gap: 8,
   },
-  textInput:{
-    with:"100%",
-    height:50,
-    padding:5,
-    backgroundColor:"#ccc",
-    borderRadius:10,
+  logo: {
+    width: 130,
+    height: 36,
+    marginBottom: 12,
   },
-  footer:{
-    justifyContent:"center",
-    flexDirection:"row",
-    paddingTop:5,
-    gap:2,
-
+  h1: {
+    color: colors.text.DEFAULT,
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: -0.6,
   },
-  footerIntro:{
-    fontSize:15,
-    color:colors["gray"][100]
+  subtitle: {
+    color: colors.text.muted,
+    fontSize: 15,
+    lineHeight: 22,
   },
-  footerLink:{
-    fontSize:15,
-    color:colors["secondary"].DEFAULT
+  fields: {
+    gap: 20,
   },
-  buttonSyles:{
-    width:"100%",
-    marginTop:30
-  }
+  actions: {
+    marginTop: 32,
+    gap: 20,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    paddingTop: 4,
+  },
+  footerText: {
+    color: colors.text.muted,
+    fontSize: 14,
+  },
+  footerLink: {
+    color: colors.accent.orange,
+    fontSize: 14,
+    fontWeight: '700',
+  },
 })
 
 export default SignIn

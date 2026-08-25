@@ -1,104 +1,151 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React from 'react'
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+
+import PosterTile from '../../components/flatlist'
 import useMoviesStore from '../../store/moviesStore'
-import FlatlistView from '../../components/flatlist'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '../../constants'
-import Pagination from '../../components/pagination'
 
-const favorites = () => {
-    const getMovies = useMoviesStore((state)=>state.getMovies)
-    const items = useMoviesStore(state=>state.items)
-    const movies = useMoviesStore(state=>state.paginatedMovies)
-    const initialIdx = useRef(0);
-    const lastIdx= useRef(5)
+const GRID_GUTTER = 12
 
-    function handleforwardPagination(){
-        getMovies(initialIdx.current,lastIdx.current)
-        initialIdx.current += 5
-        lastIdx.current+=5
+const Favorites = () => {
+  const movies = useMoviesStore((s) => s.movies)
+  const clearAllMovies = useMoviesStore((s) => s.clearAllMovies)
+  const insets = useSafeAreaInsets()
+  const listBottomPad = 56 + (insets.bottom || 12) + 20 // clear the floating tab bar
 
-        if (initialIdx.current > items) {
-         initialIdx.current = items % 5;
-        } else if (initialIdx.current < 0) {
-            initialIdx.current = 0;
-        } else {
-            initialIdx.current = initialIdx.current;
-        }
+  const isEmpty = movies.length === 0
 
-        if (lastIdx.current > items) {
-            lastIdx.current = items;
-          } else if (lastIdx.current < 0) {
-            lastIdx.current = 5;
-          } else {
-            lastIdx.current = lastIdx.current;
-          }
-
-        
-        
-    }
-    function handlebackwardPagination(){
-        getMovies(initialIdx.current,lastIdx.current)
-        initialIdx.current -= 5
-        lastIdx.current-=5
-        if (initialIdx.current > items) {
-            initialIdx.current = items % 5;
-           } else if (initialIdx.current < 0) {
-               initialIdx.current = 0;
-           } else {
-               initialIdx.current = initialIdx.current;
-           }
-   
-           if (lastIdx.current > items) {
-                lastIdx.current = items;
-            } else if (lastIdx.current < 0) {
-                lastIdx.current = 5;
-            } else {
-                lastIdx.current = lastIdx.current;
-            }
-    }
-
-    return (
-    <SafeAreaView style={styles.container}>
-        <View style={styles.heroSection}>
-            {
-                items>0 && 
-                <>
-                    <FlatList
-                        data={movies}
-                        keyExtractor={(item) => item.imdbID.toString()}
-                        renderItem={({ item }) => <FlatlistView item={item} />}
-                    />
-                    {
-                        items>5 &&
-                        <Pagination handleforwardPagination={handleforwardPagination}
-                            handlebackwardPagination={handlebackwardPagination}
-                        />
-                    }
-                </>
-            }
-            {
-                items===0 &&
-                <Text style={styles.result}>No Item Found</Text>
-            }
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.hero}>
+        <View style={styles.heroTop}>
+          <View style={styles.heroTitleWrap}>
+            <Text style={styles.h1}>Watchlist</Text>
+            <Text style={styles.subtitle}>
+              {isEmpty
+                ? 'Movies you save will appear here'
+                : `${movies.length} ${movies.length === 1 ? 'movie' : 'movies'} saved`}
+            </Text>
+          </View>
+          {isEmpty ? null : (
+            <Pressable
+              onPress={clearAllMovies}
+              hitSlop={8}
+              style={({ pressed }) => [styles.clearBtn, pressed && { opacity: 0.6 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Clear all saved movies"
+            >
+              <Text style={styles.clearBtnText}>Clear all</Text>
+            </Pressable>
+          )}
         </View>
+      </View>
+
+      {isEmpty ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyEmoji}>🎬</Text>
+          <Text style={styles.emptyTitle}>Your Watchlist is empty</Text>
+          <Text style={styles.emptySubtitle}>
+            Find a movie on Discover, open it, and tap{'\n'}
+            <Text style={styles.emptyAccent}>+ Add to Watchlist</Text> to save it here.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={movies}
+          keyExtractor={(item) => item.imdbID.toString()}
+          renderItem={({ item }) => <PosterTile item={item} />}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={[styles.grid, { paddingBottom: listBottomPad }]}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   )
 }
 
-export default favorites
-
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: colors["primary"]
-    },
-        heroSection: {
-        marginHorizontal: 10,
-        marginVertical: 5,
-        height: "100%"
-    },
-    result: {
-      color: "white",
-      marginVertical:10
-    }
+  container: {
+    flex: 1,
+    backgroundColor: colors.primary,
+  },
+  hero: {
+    paddingHorizontal: GRID_GUTTER,
+    paddingTop: 8,
+    paddingBottom: 20,
+  },
+  heroTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  heroTitleWrap: {
+    flex: 1,
+  },
+  h1: {
+    color: colors.text.DEFAULT,
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    color: colors.text.muted,
+    fontSize: 14,
+    marginTop: 2,
+  },
+  clearBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    marginTop: 8,
+  },
+  clearBtnText: {
+    color: colors.text.muted,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  grid: {
+    paddingHorizontal: GRID_GUTTER,
+    paddingBottom: 24,
+  },
+  row: {
+    gap: GRID_GUTTER,
+    marginBottom: 20,
+  },
+  empty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    marginTop: -40,
+  },
+  emptyEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    color: colors.text.DEFAULT,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    color: colors.text.muted,
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  emptyAccent: {
+    color: colors.accent.orange,
+    fontWeight: '600',
+  },
 })
+
+export default Favorites

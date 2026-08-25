@@ -1,68 +1,65 @@
-import { View, TextInput, StyleSheet } from 'react-native'
+import { View, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native'
 import React from 'react'
 
-import {colors} from '../constants'
+import { colors, icons } from '../constants'
 
-const SearchBar = ({value, placeholder="Enter the movie name", handleChangeText, handleSubmit}) => {
+const SearchBar = ({ value, placeholder = "Search movies", handleChangeText, handleSubmit }) => {
   return (
     <View style={styles.container}>
-        <TextInput 
-          style={styles.input}
-          value={value}
-          placeholder={placeholder}
-          placeholderTextColor="#7b7b8b"
-          onChangeText={handleChangeText}
-          onEndEditing={handleSubmit}
-        />
-
-    
-        <TouchableOpacity>
-            <Image
-                source={icons.search}
-                style={styles.img}
-                resizeMode='contain'
-            />
+      <Image
+        source={icons.search}
+        style={styles.icon}
+        resizeMode='contain'
+      />
+      <TextInput
+        style={styles.input}
+        value={value}
+        placeholder={placeholder}
+        placeholderTextColor={colors.text.dim}
+        onChangeText={handleChangeText}
+        onSubmitEditing={handleSubmit}
+        returnKeyType="search"
+        autoCorrect={false}
+      />
+      {value ? (
+        <TouchableOpacity onPress={() => handleChangeText('')} hitSlop={8}>
+          <Image source={icons.rightArrow} style={styles.clear} resizeMode='contain' />
         </TouchableOpacity>
-    
-
-    </View> 
+      ) : null}
+    </View>
   )
 }
 
-/*
-
-className='flex-1 text-white font-pregular text-base mt-0.5'
-*/
-
 const styles = StyleSheet.create({
-    container: {
-        width:"100%",
-        height:50,
-        paddingHorizontal: 5,
-        borderColor: colors["black"][200],
-        backgroundColor:colors["black"][100],
-        borderWidth: 2,
-        borderRadius:10,
-        alignItems:"center",
-        flexDirection:"row",
-        gap:5
-    },
-    input:{
-        flex:1,
-        color:"white",
-        fontSize:16,
-        marginTop:0.5
-    },
-    img:{
-      width:30,
-      height:30,
-    }
+  container: {
+    width: '100%',
+    height: 48,
+    paddingHorizontal: 14,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderRadius: 24,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  input: {
+    flex: 1,
+    color: colors.text.DEFAULT,
+    fontSize: 15,
+    padding: 0,
+  },
+  icon: {
+    width: 18,
+    height: 18,
+    tintColor: colors.text.muted,
+  },
+  clear: {
+    width: 14,
+    height: 14,
+    tintColor: colors.text.dim,
+    transform: [{ rotate: '45deg' }],
+  },
 })
 
 export default SearchBar
-import { useState } from 'react'
-import { TouchableOpacity, Image } from 'react-native'
-
-import { icons } from '../constants'
-
-       
