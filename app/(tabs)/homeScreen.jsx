@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { router } from 'expo-router'
 
@@ -25,6 +25,8 @@ const GRID_GUTTER = 12
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [movieName, setMovieName] = useState('batman')
+  const insets = useSafeAreaInsets()
+  const listBottomPad = 56 + (insets.bottom || 12) + 20 // clear the floating tab bar
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
 
@@ -120,7 +122,7 @@ const Home = () => {
           renderItem={({ item }) => <PosterTile item={item} />}
           numColumns={2}
           columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.grid}
+          contentContainerStyle={[styles.grid, { paddingBottom: listBottomPad }]}
           onEndReached={() => {
             if (hasNextPage && !isFetchingNextPage) fetchNextPage()
           }}
