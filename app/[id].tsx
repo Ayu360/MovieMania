@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import {
   Image,
   Pressable,
@@ -6,90 +5,83 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native'
+} from 'react-native';
+import type { ImageStyle, StyleProp } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
-} from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useQuery } from '@tanstack/react-query'
+} from 'react-native-reanimated';
+import { useSafeAreaInsets, type EdgeInsets } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 
-import { fetchSelectedMovie } from '../api/fetchData'
-import { colors } from '../constants'
-import useMoviesStore from '../store/moviesStore'
+import { fetchSelectedMovie } from '@/api/fetchData';
+import { colors } from '@/constants';
+import useMoviesStore from '@/store/moviesStore';
+import type { MovieDetail, MovieDetailResponse } from '@/types/omdb';
 
 const DEFAULT_POSTER =
-  'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg'
+  'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg';
 
-const HERO_HEIGHT = 380
-const BACKDROP_OVERFLOW = 220 // extra image outside the visible hero, gives room for parallax + stretch
-const MAX_PULL_SCALE = 1.8
+const HERO_HEIGHT = 380;
+const BACKDROP_OVERFLOW = 220;
+const MAX_PULL_SCALE = 1.8;
 
 const SelectedMovie = () => {
-  const { id } = useLocalSearchParams()
-  const insets = useSafeAreaInsets()
-  const scrollY = useSharedValue(0)
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
+  const scrollY = useSharedValue(0);
 
-  const { data, status, error } = useQuery({
+  const { data, status, error } = useQuery<MovieDetailResponse, Error>({
     queryKey: ['movie', id],
     queryFn: () => fetchSelectedMovie(String(id)),
     enabled: Boolean(id),
-  })
+  });
 
-  const addMovies = useMoviesStore((s) => s.addMovies)
-  const removeMovie = useMoviesStore((s) => s.removeMovie)
-  const checkMovie = useMoviesStore((s) => s.checkMovie)
-  const [isPresent, setIsPresent] = useState(false)
-
-  useEffect(() => {
-    if (data?.Response === 'True') {
-      setIsPresent(checkMovie(data))
-    } else {
-      setIsPresent(false)
-    }
-  }, [data, checkMovie])
+  const addMovies = useMoviesStore((s) => s.addMovies);
+  const removeMovie = useMoviesStore((s) => s.removeMovie);
+  const savedId = data?.Response === 'True' ? data.imdbID : undefined;
+  const isPresent = useMoviesStore((s) =>
+    savedId ? s.movies.some((m) => m.imdbID === savedId) : false,
+  );
 
   const handleToggleWatchlist = () => {
-    if (data?.Response !== 'True') return
+    if (data?.Response !== 'True') return;
     if (isPresent) {
-      removeMovie(data)
-      setIsPresent(false)
+      removeMovie(data);
     } else {
-      addMovies(data)
-      setIsPresent(true)
+      addMovies(data);
     }
-  }
+  };
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (e) => {
-      scrollY.value = e.contentOffset.y
+      scrollY.value = e.contentOffset.y;
     },
-  })
+  });
 
-  // Parallax + top-anchored pull stretch computed on the UI thread.
   const backdropStyle = useAnimatedStyle(() => {
     const translateY = interpolate(
       scrollY.value,
       [-HERO_HEIGHT, 0, HERO_HEIGHT],
       [
-        (HERO_HEIGHT * (MAX_PULL_SCALE - 1)) / 2, // anchor top under max pull-stretch
+        (HERO_HEIGHT * (MAX_PULL_SCALE - 1)) / 2,
         0,
-        -HERO_HEIGHT * 0.3, // parallax up on scroll
+        -HERO_HEIGHT * 0.3,
       ],
       Extrapolation.EXTEND,
-    )
+    );
     const scale = interpolate(
       scrollY.value,
       [-HERO_HEIGHT, 0],
       [MAX_PULL_SCALE, 1],
       { extrapolateLeft: Extrapolation.EXTEND, extrapolateRight: Extrapolation.CLAMP },
-    )
-    return { transform: [{ translateY }, { scale }] }
-  })
+    );
+    return { transform: [{ translateY }, { scale }] };
+  });
 
   return (
     <View style={styles.root}>
@@ -107,7 +99,7 @@ const SelectedMovie = () => {
         <ErrorState title="Movie not found" subtitle={data?.Error ?? 'Unknown id.'} />
       ) : (
         <MovieContent
-          data={data}
+          data={data as MovieDetail}
           insets={insets}
           scrollHandler={scrollHandler}
           backdropStyle={backdropStyle}
@@ -116,8 +108,17 @@ const SelectedMovie = () => {
         />
       )}
     </View>
-  )
-}
+  );
+};
+
+type MovieContentProps = {
+  data: MovieDetail;
+  insets: EdgeInsets;
+  scrollHandler: ReturnType<typeof useAnimatedScrollHandler>;
+  backdropStyle: ReturnType<typeof useAnimatedStyle>;
+  isPresent: boolean;
+  onToggle: () => void;
+};
 
 const MovieContent = ({
   data,
@@ -126,10 +127,13 @@ const MovieContent = ({
   backdropStyle,
   isPresent,
   onToggle,
-}) => {
-  const poster = data.Poster === 'N/A' ? DEFAULT_POSTER : data.Poster
-  const genres = (data.Genre ?? '').split(',').map((g) => g.trim()).filter(Boolean)
-  const type = data.Type ? data.Type[0].toUpperCase() + data.Type.slice(1) : null
+}: MovieContentProps) => {
+  const poster = data.Poster === 'N/A' ? DEFAULT_POSTER : data.Poster;
+  const genres = (data.Genre ?? '')
+    .split(',')
+    .map((g) => g.trim())
+    .filter(Boolean);
+  const type = data.Type ? data.Type[0].toUpperCase() + data.Type.slice(1) : null;
 
   return (
     <>
@@ -138,7 +142,7 @@ const MovieContent = ({
           source={{ uri: poster }}
           resizeMode="cover"
           blurRadius={30}
-          style={[styles.backdrop, backdropStyle]}
+          style={[styles.backdrop, backdropStyle as StyleProp<ImageStyle>]}
         />
         <View style={styles.backdropDarken} />
         <View style={styles.backdropGradient} />
@@ -226,17 +230,23 @@ const MovieContent = ({
         </Pressable>
       </Animated.ScrollView>
     </>
-  )
-}
+  );
+};
 
-const Section = ({ title, body, plot }) => (
+type SectionProps = {
+  title: string;
+  body: string;
+  plot?: boolean;
+};
+
+const Section = ({ title, body, plot }: SectionProps) => (
   <View style={styles.section}>
     <Text style={styles.sectionTitle}>{title}</Text>
     <Text style={plot ? styles.plot : styles.sectionBody}>{body}</Text>
   </View>
-)
+);
 
-const FloatingBackButton = ({ topInset }) => (
+const FloatingBackButton = ({ topInset }: { topInset: number }) => (
   <Pressable
     onPress={() => router.back()}
     hitSlop={12}
@@ -250,7 +260,7 @@ const FloatingBackButton = ({ topInset }) => (
   >
     <Text style={styles.backChevron}>‹</Text>
   </Pressable>
-)
+);
 
 const MovieDetailSkeleton = () => (
   <View style={styles.root}>
@@ -265,7 +275,9 @@ const MovieDetailSkeleton = () => (
       <View style={styles.headerText}>
         <View style={[styles.skeletonLine, { width: '80%', height: 22 }]} />
         <View style={[styles.skeletonLine, { width: '55%', height: 14, marginTop: 12 }]} />
-        <View style={[styles.skeletonLine, { width: '40%', height: 28, marginTop: 12, borderRadius: 14 }]} />
+        <View
+          style={[styles.skeletonLine, { width: '40%', height: 28, marginTop: 12, borderRadius: 14 }]}
+        />
       </View>
     </View>
     <View style={styles.chipsRow}>
@@ -281,14 +293,19 @@ const MovieDetailSkeleton = () => (
       <View style={[styles.skeletonLine, { width: '60%', height: 12, marginTop: 8 }]} />
     </View>
   </View>
-)
+);
 
-const ErrorState = ({ title, subtitle }) => (
+type ErrorStateProps = {
+  title: string;
+  subtitle: string;
+};
+
+const ErrorState = ({ title, subtitle }: ErrorStateProps) => (
   <View style={[styles.root, styles.errorContainer]}>
     <Text style={styles.errorTitle}>{title}</Text>
     <Text style={styles.errorSubtitle}>{subtitle}</Text>
   </View>
-)
+);
 
 const styles = StyleSheet.create({
   root: {
@@ -315,7 +332,11 @@ const styles = StyleSheet.create({
     height: HERO_HEIGHT + BACKDROP_OVERFLOW,
   },
   backdropDarken: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: colors.primary,
     opacity: 0.35,
   },
@@ -523,6 +544,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-})
+});
 
-export default SelectedMovie
+export default SelectedMovie;

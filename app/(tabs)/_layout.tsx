@@ -1,12 +1,18 @@
-import { Tabs } from 'expo-router'
-import { StyleSheet, Text, View } from 'react-native'
-import { BlurView } from 'expo-blur'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { colors } from '@/constants'
+import { Tabs } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const TabIcon = ({ emoji, focused }) => (
+import { colors } from '@/constants';
+
+type TabIconProps = {
+  emoji: string;
+  focused: boolean;
+};
+
+const TabIcon = ({ emoji, focused }: TabIconProps) => (
   <Text style={[styles.icon, focused && styles.iconFocused]}>{emoji}</Text>
-)
+);
 
 // Real frosted-glass tab bar: a BlurView renders the material, a subtle dark
 // tint on top keeps text readable, and a hairline top border defines the edge.
@@ -16,11 +22,11 @@ const TabBarBackground = () => (
     <View style={styles.tabBarTint} />
     <View style={styles.tabBarBorder} />
   </View>
-)
+);
 
 export default function TabsLayout() {
-  const insets = useSafeAreaInsets()
-  const bottomPad = insets.bottom || 12
+  const insets = useSafeAreaInsets();
+  const bottomPad = insets.bottom || 12;
 
   return (
     <Tabs
@@ -62,7 +68,7 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -105,4 +111,4 @@ const styles = StyleSheet.create({
   iconFocused: {
     opacity: 1,
   },
-})
+});
