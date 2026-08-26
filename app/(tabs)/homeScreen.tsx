@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -7,68 +7,60 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
-import { router } from 'expo-router'
+} from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 
-import SearchBar from '../../components/searchBar'
-import PosterTile from '../../components/flatlist'
-import { fetchMovies } from '../../api/fetchData'
-import { colors, icons } from '../../constants'
-import useAuthStore from '../../store/authStore'
+import SearchBar from '@/components/SearchBar';
+import PosterTile from '@/components/PosterTile';
+import { fetchMovies } from '@/api/fetchData';
+import { colors, icons } from '@/constants';
+import useAuthStore from '@/store/authStore';
+import type { SearchResponse, SearchResult } from '@/types/omdb';
 
-const OMDB_PAGE_SIZE = 10
-const SKELETON_COUNT = 6
-const GRID_GUTTER = 12
+const SKELETON_COUNT = 6;
+const GRID_GUTTER = 12;
 
 const Home = () => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [movieName, setMovieName] = useState('batman')
-  const insets = useSafeAreaInsets()
-  const listBottomPad = 56 + (insets.bottom || 12) + 20 // clear the floating tab bar
-  const user = useAuthStore((s) => s.user)
-  const setUser = useAuthStore((s) => s.setUser)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [movieName, setMovieName] = useState('batman');
+  const insets = useSafeAreaInsets();
+  const listBottomPad = 56 + (insets.bottom || 12) + 20;
+  const logout = useAuthStore((s) => s.logout);
 
-  const handleLogout = () => {
-    setUser({ ...user, isLoggedIn: false })
-    router.dismissAll('/')
-  }
+  const { data, status, error, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
+    useInfiniteQuery<SearchResponse, Error>({
+      queryKey: ['movies', movieName],
+      queryFn: ({ pageParam }) =>
+        fetchMovies(`s=${encodeURIComponent(movieName)}`, pageParam as number),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.Response !== 'True') return undefined;
+        const loaded = allPages.reduce(
+          (sum, p) => sum + (p.Response === 'True' ? p.Search.length : 0),
+          0,
+        );
+        const total = Number(lastPage.totalResults ?? 0);
+        return loaded < total ? allPages.length + 1 : undefined;
+      },
+      enabled: movieName.length > 0,
+      placeholderData: keepPreviousData,
+    });
 
-  const {
-    data,
-    status,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isFetching,
-  } = useInfiniteQuery({
-    queryKey: ['movies', movieName],
-    queryFn: ({ pageParam }) => fetchMovies(`s=${encodeURIComponent(movieName)}`, pageParam),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage?.Response !== 'True') return undefined
-      const loaded = allPages.reduce((sum, p) => sum + (p.Search?.length ?? 0), 0)
-      const total = Number(lastPage.totalResults ?? 0)
-      return loaded < total ? allPages.length + 1 : undefined
-    },
-    enabled: movieName.length > 0,
-    placeholderData: keepPreviousData,
-  })
-
-  const movies = useMemo(
-    () => data?.pages?.flatMap((p) => p.Search ?? []) ?? [],
+  const movies = useMemo<SearchResult[]>(
+    () =>
+      data?.pages?.flatMap((p) => (p.Response === 'True' ? p.Search : [])) ?? [],
     [data],
-  )
-  const totalResults = Number(data?.pages?.[0]?.totalResults ?? 0)
-  const firstPage = data?.pages?.[0]
-  const isEmpty = status === 'success' && firstPage?.Response === 'False'
+  );
+  const firstPage = data?.pages?.[0];
+  const totalResults =
+    firstPage?.Response === 'True' ? Number(firstPage.totalResults ?? 0) : 0;
+  const isEmpty = status === 'success' && firstPage?.Response === 'False';
 
   const handleSubmit = () => {
-    const trimmed = searchQuery.trim()
-    if (trimmed.length > 0) setMovieName(trimmed)
-  }
+    const trimmed = searchQuery.trim();
+    if (trimmed.length > 0) setMovieName(trimmed);
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -79,7 +71,7 @@ const Home = () => {
             <Text style={styles.subtitle}>Find your next movie</Text>
           </View>
           <Pressable
-            onPress={handleLogout}
+            onPress={logout}
             hitSlop={12}
             style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.6 }]}
             accessibilityRole="button"
@@ -124,7 +116,7 @@ const Home = () => {
           columnWrapperStyle={styles.row}
           contentContainerStyle={[styles.grid, { paddingBottom: listBottomPad }]}
           onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
           }}
           onEndReachedThreshold={0.6}
           ListFooterComponent={
@@ -133,7 +125,7 @@ const Home = () => {
                 <ActivityIndicator color={colors.text.muted} />
               </View>
             ) : hasNextPage ? null : movies.length > 0 ? (
-              <Text style={styles.footerEnd}>You've reached the end</Text>
+              <Text style={styles.footerEnd}>You&apos;ve reached the end</Text>
             ) : null
           }
           refreshing={isFetching && !isFetchingNextPage && movies.length > 0}
@@ -141,8 +133,8 @@ const Home = () => {
         />
       )}
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const SkeletonGrid = () => (
   <View style={[styles.grid, styles.skeletonGrid]}>
@@ -154,14 +146,19 @@ const SkeletonGrid = () => (
       </View>
     ))}
   </View>
-)
+);
 
-const EmptyState = ({ title, subtitle }) => (
+type EmptyStateProps = {
+  title: string;
+  subtitle: string;
+};
+
+const EmptyState = ({ title, subtitle }: EmptyStateProps) => (
   <View style={styles.empty}>
     <Text style={styles.emptyTitle}>{title}</Text>
     <Text style={styles.emptySubtitle}>{subtitle}</Text>
   </View>
-)
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -289,6 +286,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     width: '40%',
   },
-})
+});
 
-export default Home
+export default Home;

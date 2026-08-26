@@ -1,6 +1,26 @@
-import React from 'react'
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native'
-import { colors } from '../constants'
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
+
+import { colors } from '@/constants';
+
+type Variant = 'primary' | 'secondary';
+
+type Props = {
+  title: string;
+  handlePress: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  variant?: Variant;
+  containerStyles?: StyleProp<ViewStyle>;
+  textStyles?: StyleProp<TextStyle>;
+};
 
 const CustomButton = ({
   title,
@@ -10,9 +30,9 @@ const CustomButton = ({
   variant = 'primary',
   containerStyles,
   textStyles,
-}) => {
-  const isDisabled = isLoading || disabled
-  const isSecondary = variant === 'secondary'
+}: Props) => {
+  const isDisabled = isLoading || disabled;
+  const isSecondary = variant === 'secondary';
 
   return (
     <Pressable
@@ -42,8 +62,8 @@ const CustomButton = ({
         </Text>
       )}
     </Pressable>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   base: {
@@ -78,6 +98,6 @@ const styles = StyleSheet.create({
   textSecondary: {
     color: colors.text.DEFAULT,
   },
-})
+});
 
-export default CustomButton
+export default CustomButton;

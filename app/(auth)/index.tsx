@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -8,43 +8,52 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Link, router } from 'expo-router'
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Link, router } from 'expo-router';
 
-import useAuthStore from '../../store/authStore'
-import FormField from '../../components/formField'
-import CustomButton from '../../components/customButton'
-import { colors, images } from '../../constants'
+import useAuthStore from '@/store/authStore';
+import FormField, { type FormFieldHandle } from '@/components/FormField';
+import CustomButton from '@/components/CustomButton';
+import { colors, images } from '@/constants';
 
-function validateEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return regex.test(email)
+function validateEmail(email: string): boolean {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
 }
 
+type Form = {
+  email: string;
+  userName: string;
+  password: string;
+};
+
 const SignIn = () => {
-  const setUser = useAuthStore((s) => s.setUser)
-  const [form, setForm] = useState({ email: '', userName: '', password: '' })
-  const [submitting, setSubmitting] = useState(false)
+  const signIn = useAuthStore((s) => s.signIn);
+  const [form, setForm] = useState<Form>({ email: '', userName: '', password: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-  const userRef = useRef(null)
-  const passRef = useRef(null)
+  const userRef = useRef<FormFieldHandle>(null);
+  const passRef = useRef<FormFieldHandle>(null);
 
-  const update = (key) => (value) => setForm((prev) => ({ ...prev, [key]: value }))
+  const update =
+    <K extends keyof Form>(key: K) =>
+    (value: Form[K]) =>
+      setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleSubmit = () => {
     if (!form.email.trim() || !form.userName.trim() || !form.password.trim()) {
-      Alert.alert('Incomplete details', 'Please fill in all fields.')
-      return
+      Alert.alert('Incomplete details', 'Please fill in all fields.');
+      return;
     }
     if (!validateEmail(form.email.trim())) {
-      Alert.alert('Invalid email', 'Please enter a valid email address.')
-      return
+      Alert.alert('Invalid email', 'Please enter a valid email address.');
+      return;
     }
-    setSubmitting(true)
-    setUser({ ...form, isLoggedIn: true })
-    router.replace('/(tabs)/homeScreen')
-  }
+    setSubmitting(true);
+    signIn(form);
+    router.replace('/(tabs)/homeScreen');
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -62,9 +71,7 @@ const SignIn = () => {
           <View style={styles.header}>
             <Image source={images.logo} style={styles.logo} resizeMode="contain" />
             <Text style={styles.h1}>Welcome back</Text>
-            <Text style={styles.subtitle}>
-              Sign in to save movies to your Watchlist.
-            </Text>
+            <Text style={styles.subtitle}>Sign in to save movies to your Watchlist.</Text>
           </View>
 
           <View style={styles.fields}>
@@ -104,11 +111,7 @@ const SignIn = () => {
           </View>
 
           <View style={styles.actions}>
-            <CustomButton
-              title="Sign in"
-              handlePress={handleSubmit}
-              isLoading={submitting}
-            />
+            <CustomButton title="Sign in" handlePress={handleSubmit} isLoading={submitting} />
             <View style={styles.footer}>
               <Text style={styles.footerText}>Not now?</Text>
               <Link href="../" replace style={styles.footerLink}>
@@ -119,8 +122,8 @@ const SignIn = () => {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -176,6 +179,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-})
+});
 
-export default SignIn
+export default SignIn;

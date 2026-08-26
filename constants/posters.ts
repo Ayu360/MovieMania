@@ -1,4 +1,3 @@
-// Bundled poster art for the landing marquee. Downloaded once from OMDb.
 const posters = [
   require('../assets/posters/godfather.jpg'),
   require('../assets/posters/pulp-fiction.jpg'),
@@ -10,6 +9,6 @@ const posters = [
   require('../assets/posters/oppenheimer.jpg'),
   require('../assets/posters/blade-runner-2049.jpg'),
   require('../assets/posters/eeaao.jpg'),
-]
+] as const;
 
-export default posters
+export default posters;

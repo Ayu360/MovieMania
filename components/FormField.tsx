@@ -1,8 +1,38 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
-import { colors } from '../constants'
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import {
+  KeyboardTypeOptions,
+  NativeSyntheticEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  TextInputSubmitEditingEventData,
+  View,
+} from 'react-native';
 
-const FormField = forwardRef(
+import { colors } from '@/constants';
+
+export type FormFieldHandle = {
+  focus: () => void;
+  blur: () => void;
+};
+
+type Props = {
+  label?: string;
+  value: string;
+  placeholder?: string;
+  handleChangeText: (value: string) => void;
+  secureTextEntry?: boolean;
+  keyboardType?: KeyboardTypeOptions;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  autoComplete?: TextInputProps['autoComplete'];
+  returnKeyType?: TextInputProps['returnKeyType'];
+  onSubmitEditing?: (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void;
+  blurOnSubmit?: boolean;
+};
+
+const FormField = forwardRef<FormFieldHandle, Props>(
   (
     {
       label,
@@ -19,20 +49,17 @@ const FormField = forwardRef(
     },
     ref,
   ) => {
-    const [hidden, setHidden] = useState(true)
-    const [focused, setFocused] = useState(false)
-    const inputRef = useRef(null)
+    const [hidden, setHidden] = useState(true);
+    const [focused, setFocused] = useState(false);
+    const inputRef = useRef<TextInput>(null);
 
     useImperativeHandle(ref, () => ({
       focus: () => inputRef.current?.focus(),
       blur: () => inputRef.current?.blur(),
-    }))
+    }));
 
     return (
-      <Pressable
-        onPress={() => inputRef.current?.focus()}
-        style={styles.container}
-      >
+      <Pressable onPress={() => inputRef.current?.focus()} style={styles.container}>
         {label ? <Text style={styles.label}>{label}</Text> : null}
         <View style={[styles.inputWrap, focused && styles.inputWrapFocused]}>
           <TextInput
@@ -68,11 +95,11 @@ const FormField = forwardRef(
           ) : null}
         </View>
       </Pressable>
-    )
+    );
   },
-)
+);
 
-FormField.displayName = 'FormField'
+FormField.displayName = 'FormField';
 
 const styles = StyleSheet.create({
   container: {
@@ -114,6 +141,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-})
+});
 
-export default FormField
+export default FormField;

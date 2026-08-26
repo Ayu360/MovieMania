@@ -1,16 +1,23 @@
-import { View, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native'
-import React from 'react'
+import { Image, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { colors, icons } from '../constants'
+import { colors, icons } from '@/constants';
 
-const SearchBar = ({ value, placeholder = "Search movies", handleChangeText, handleSubmit }) => {
+type Props = {
+  value: string;
+  placeholder?: string;
+  handleChangeText: (value: string) => void;
+  handleSubmit: () => void;
+};
+
+const SearchBar = ({
+  value,
+  placeholder = 'Search movies',
+  handleChangeText,
+  handleSubmit,
+}: Props) => {
   return (
     <View style={styles.container}>
-      <Image
-        source={icons.search}
-        style={styles.icon}
-        resizeMode='contain'
-      />
+      <Image source={icons.search} style={styles.icon} resizeMode="contain" />
       <TextInput
         style={styles.input}
         value={value}
@@ -23,12 +30,12 @@ const SearchBar = ({ value, placeholder = "Search movies", handleChangeText, han
       />
       {value ? (
         <TouchableOpacity onPress={() => handleChangeText('')} hitSlop={8}>
-          <Image source={icons.rightArrow} style={styles.clear} resizeMode='contain' />
+          <Image source={icons.rightArrow} style={styles.clear} resizeMode="contain" />
         </TouchableOpacity>
       ) : null}
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -60,6 +67,6 @@ const styles = StyleSheet.create({
     tintColor: colors.text.dim,
     transform: [{ rotate: '45deg' }],
   },
-})
+});
 
-export default SearchBar
+export default SearchBar;

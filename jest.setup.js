@@ -4,6 +4,39 @@
 jest.mock('react-native-worklets', () => ({}))
 jest.mock('react-native-worklets/plugin', () => ({}))
 
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+)
+
+jest.mock('expo-router', () => {
+  return {
+    __esModule: true,
+    Redirect: () => null,
+    Link: ({ children }) => children,
+    router: {
+      push: jest.fn(),
+      replace: jest.fn(),
+      navigate: jest.fn(),
+      back: jest.fn(),
+      dismissAll: jest.fn(),
+    },
+    useLocalSearchParams: () => ({}),
+    Stack: Object.assign(({ children }) => children, {
+      Screen: () => null,
+      Protected: ({ children }) => children,
+    }),
+    Tabs: Object.assign(({ children }) => children, {
+      Screen: () => null,
+      Protected: ({ children }) => children,
+    }),
+  }
+})
+
+jest.mock('expo-blur', () => {
+  const RN = require('react-native')
+  return { BlurView: RN.View }
+})
+
 jest.mock('react-native-reanimated', () => {
   const RN = require('react-native')
   const passthrough = (v) => v

@@ -1,27 +1,32 @@
-import React from 'react'
-import { View, Text, Image, StyleSheet, Pressable } from 'react-native'
-import { router } from 'expo-router'
-import { colors } from '../constants'
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 
-const DEFAULT_POSTER = 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg'
+import { colors } from '@/constants';
+import type { MovieType, SearchResult } from '@/types/omdb';
+import type { SavedMovie } from '@/store/moviesStore';
 
-const TYPE_LABEL = {
+const DEFAULT_POSTER =
+  'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg';
+
+const TYPE_LABEL: Record<MovieType, string> = {
   movie: 'Movie',
   series: 'Series',
   episode: 'Episode',
   game: 'Game',
-}
+};
 
-const PosterTile = ({ item }) => {
-  const poster = !item.Poster || item.Poster === 'N/A' ? DEFAULT_POSTER : item.Poster
-  const type = TYPE_LABEL[item.Type] ?? item.Type
+type Props = {
+  item: SearchResult | SavedMovie;
+};
+
+const PosterTile = ({ item }: Props) => {
+  const poster = !item.Poster || item.Poster === 'N/A' ? DEFAULT_POSTER : item.Poster;
+  const type = TYPE_LABEL[item.Type] ?? item.Type;
 
   return (
     <Pressable
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
-      onPress={() =>
-        router.navigate({ pathname: '[movieId]', params: { id: item.imdbID } })
-      }
+      onPress={() => router.navigate({ pathname: '/[id]', params: { id: item.imdbID } })}
     >
       <View style={styles.posterWrap}>
         <Image source={{ uri: poster }} style={styles.poster} resizeMode="cover" />
@@ -39,8 +44,8 @@ const PosterTile = ({ item }) => {
         ) : null}
       </View>
     </Pressable>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -90,6 +95,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-})
+});
 
-export default PosterTile
+export default PosterTile;

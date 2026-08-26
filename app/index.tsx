@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react'
-import { Image, StyleSheet, Text, View } from 'react-native'
+import { useEffect, useMemo } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -7,40 +7,40 @@ import Animated, {
   useSharedValue,
   withRepeat,
   withTiming,
-} from 'react-native-reanimated'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
+} from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect, router } from 'expo-router';
 
-import { colors, images } from '@/constants'
-import posters from '@/constants/posters'
-import CustomButton from '@/components/customButton'
+import { colors, images } from '@/constants';
+import posters from '@/constants/posters';
+import CustomButton from '@/components/CustomButton';
+import useAuthStore from '@/store/authStore';
 
-// Preserved (jest snapshot imports this).
-export function AppName({ children }) {
-  return <Text style={{ color: colors.secondary[200] }}>{children}</Text>
-}
-
-const POSTER_WIDTH = 110
-const POSTER_HEIGHT = 165
-const POSTER_GAP = 12
-const ROW_WIDTH = posters.length * (POSTER_WIDTH + POSTER_GAP)
+const POSTER_WIDTH = 110;
+const POSTER_HEIGHT = 165;
+const POSTER_GAP = 12;
+const ROW_WIDTH = posters.length * (POSTER_WIDTH + POSTER_GAP);
 // Base marquee loop duration. Row 2 uses ~1.55x for parallax speed differential.
-const SCROLL_DURATION = 65000
+const SCROLL_DURATION = 65000;
 // Slow Ken-Burns zoom cycle on the blurred backdrop.
-const BACKDROP_KEN_BURNS_DURATION = 22000
-const BACKDROP_KEN_BURNS_MAX_SCALE = 1.15
+const BACKDROP_KEN_BURNS_DURATION = 22000;
+const BACKDROP_KEN_BURNS_MAX_SCALE = 1.15;
 
-// Which bundled poster to use as the blurred hero backdrop.
-// Blade Runner 2049 has the strong orange/teal palette that matches our accents.
-const BACKDROP_SOURCE = posters[8]
+// Blade Runner 2049 — strong orange/teal palette that matches our accents.
+const BACKDROP_SOURCE = posters[8];
 
-const PosterRow = ({ direction = 'left', speed = 1 }) => {
-  const start = direction === 'left' ? 0 : -ROW_WIDTH
-  const end = direction === 'left' ? -ROW_WIDTH : 0
-  const translate = useSharedValue(start)
+type PosterRowProps = {
+  direction?: 'left' | 'right';
+  speed?: number;
+};
+
+const PosterRow = ({ direction = 'left', speed = 1 }: PosterRowProps) => {
+  const start = direction === 'left' ? 0 : -ROW_WIDTH;
+  const end = direction === 'left' ? -ROW_WIDTH : 0;
+  const translate = useSharedValue(start);
 
   useEffect(() => {
-    translate.value = start
+    translate.value = start;
     translate.value = withRepeat(
       withTiming(end, {
         duration: SCROLL_DURATION / speed,
@@ -48,16 +48,16 @@ const PosterRow = ({ direction = 'left', speed = 1 }) => {
       }),
       -1,
       false,
-    )
-    return () => cancelAnimation(translate)
-  }, [direction, speed, start, end, translate])
+    );
+    return () => cancelAnimation(translate);
+  }, [direction, speed, start, end, translate]);
 
   const rowStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translate.value }],
-  }))
+  }));
 
-  const items = useMemo(() => [...posters, ...posters], [])
-  const orderedItems = direction === 'left' ? items : [...items].reverse()
+  const items = useMemo(() => [...posters, ...posters], []);
+  const orderedItems = direction === 'left' ? items : [...items].reverse();
 
   return (
     <View style={styles.rowClip} pointerEvents="none">
@@ -72,13 +72,14 @@ const PosterRow = ({ direction = 'left', speed = 1 }) => {
         ))}
       </Animated.View>
     </View>
-  )
-}
+  );
+};
 
 const RootIndex = () => {
-  // Ken Burns: slow scale in/out on the blurred backdrop for a cinematic
-  // "moving still" feel. Provides the parallax-like motion without scroll.
-  const backdropScale = useSharedValue(1)
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+
+  // Slow scale in/out on the blurred backdrop for a cinematic "moving still" feel.
+  const backdropScale = useSharedValue(1);
   useEffect(() => {
     backdropScale.value = withRepeat(
       withTiming(BACKDROP_KEN_BURNS_MAX_SCALE, {
@@ -86,18 +87,21 @@ const RootIndex = () => {
         easing: Easing.inOut(Easing.quad),
       }),
       -1,
-      true, // reverse each iteration so it breathes in/out
-    )
-    return () => cancelAnimation(backdropScale)
-  }, [backdropScale])
+      true,
+    );
+    return () => cancelAnimation(backdropScale);
+  }, [backdropScale]);
 
   const backdropStyle = useAnimatedStyle(() => ({
     transform: [{ scale: backdropScale.value }],
-  }))
+  }));
+
+  if (isLoggedIn) {
+    return <Redirect href="/(tabs)/homeScreen" />;
+  }
 
   return (
     <View style={styles.root}>
-      {/* Blurred backdrop with Ken Burns zoom */}
       <View style={styles.backdropWrap} pointerEvents="none">
         <Animated.Image
           source={BACKDROP_SOURCE}
@@ -115,8 +119,6 @@ const RootIndex = () => {
         </View>
 
         <View style={styles.marqueeArea} pointerEvents="none">
-          {/* Row 1 slides left at base speed. Row 2 slides right at ~65% speed —
-              speed differential creates a parallax-of-depth feel. */}
           <PosterRow direction="left" speed={1} />
           <View style={{ height: POSTER_GAP }} />
           <PosterRow direction="right" speed={0.65} />
@@ -126,9 +128,7 @@ const RootIndex = () => {
 
         <View style={styles.hero}>
           <Text style={styles.eyebrow}>MovieMania</Text>
-          <Text style={styles.h1}>
-            Discover movies{'\n'}worth your time.
-          </Text>
+          <Text style={styles.h1}>Discover movies{'\n'}worth your time.</Text>
           <Text style={styles.subtitle}>
             Search a vast catalog, save what catches your eye, and never lose track of the next
             film on your list.
@@ -143,8 +143,8 @@ const RootIndex = () => {
         </View>
       </SafeAreaView>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   root: {
@@ -197,7 +197,6 @@ const styles = StyleSheet.create({
     width: 140,
     height: 40,
   },
-  // Marquee extends beyond the safe-area horizontal padding for edge-to-edge scroll.
   marqueeArea: {
     marginTop: 20,
     marginHorizontal: -24,
@@ -248,6 +247,6 @@ const styles = StyleSheet.create({
   actions: {
     paddingBottom: 8,
   },
-})
+});
 
-export default RootIndex
+export default RootIndex;

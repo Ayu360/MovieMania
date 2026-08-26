@@ -1,20 +1,19 @@
-import React from 'react'
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import PosterTile from '../../components/flatlist'
-import useMoviesStore from '../../store/moviesStore'
-import { colors } from '../../constants'
+import PosterTile from '@/components/PosterTile';
+import useMoviesStore from '@/store/moviesStore';
+import { colors } from '@/constants';
 
-const GRID_GUTTER = 12
+const GRID_GUTTER = 12;
 
 const Favorites = () => {
-  const movies = useMoviesStore((s) => s.movies)
-  const clearAllMovies = useMoviesStore((s) => s.clearAllMovies)
-  const insets = useSafeAreaInsets()
-  const listBottomPad = 56 + (insets.bottom || 12) + 20 // clear the floating tab bar
+  const movies = useMoviesStore((s) => s.movies);
+  const clearAllMovies = useMoviesStore((s) => s.clearAllMovies);
+  const insets = useSafeAreaInsets();
+  const listBottomPad = 56 + (insets.bottom || 12) + 20;
 
-  const isEmpty = movies.length === 0
+  const isEmpty = movies.length === 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -54,7 +53,7 @@ const Favorites = () => {
       ) : (
         <FlatList
           data={movies}
-          keyExtractor={(item) => item.imdbID.toString()}
+          keyExtractor={(item) => item.imdbID}
           renderItem={({ item }) => <PosterTile item={item} />}
           numColumns={2}
           columnWrapperStyle={styles.row}
@@ -63,8 +62,8 @@ const Favorites = () => {
         />
       )}
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -146,6 +145,6 @@ const styles = StyleSheet.create({
     color: colors.accent.orange,
     fontWeight: '600',
   },
-})
+});
 
-export default Favorites
+export default Favorites;
