@@ -43,3 +43,17 @@ export async function fetchMe(appToken: string): Promise<BackendUser & { appUid:
   }
   return (await res.json()) as BackendUser & { appUid: string };
 }
+
+export async function deleteMe(appToken: string): Promise<void> {
+  if (!BACKEND_URL) {
+    throw new Error('EXPO_PUBLIC_BACKEND_URL is not set');
+  }
+  const res = await fetch(`${BACKEND_URL}/me`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${appToken}` },
+  });
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(`DELETE /me failed (${res.status}): ${message}`);
+  }
+}

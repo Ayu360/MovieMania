@@ -37,6 +37,9 @@ export default function RootLayout() {
             <Stack.Protected guard={isLoggedIn}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="profile" options={{ headerShown: false }} />
+              <Stack.Screen name="terms" options={{ headerShown: false }} />
+              <Stack.Screen name="contact" options={{ headerShown: false }} />
             </Stack.Protected>
           </Stack>
         </QueryClientProvider>

@@ -1,4 +1,5 @@
 import { Image, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { colors, icons } from '@/constants';
 
@@ -29,8 +30,13 @@ const SearchBar = ({
         autoCorrect={false}
       />
       {value ? (
-        <TouchableOpacity onPress={() => handleChangeText('')} hitSlop={8}>
-          <Image source={icons.rightArrow} style={styles.clear} resizeMode="contain" />
+        <TouchableOpacity
+          onPress={() => handleChangeText('')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Clear search"
+        >
+          <Ionicons name="close-circle" size={18} color={colors.text.dim} />
         </TouchableOpacity>
       ) : null}
     </View>
@@ -60,12 +66,6 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     tintColor: colors.text.muted,
-  },
-  clear: {
-    width: 14,
-    height: 14,
-    tintColor: colors.text.dim,
-    transform: [{ rotate: '45deg' }],
   },
 });
 
