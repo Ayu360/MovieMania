@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -5,6 +6,7 @@ import {
   StyleSheet,
   Text,
   TextStyle,
+  View,
   ViewStyle,
 } from 'react-native';
 
@@ -18,6 +20,7 @@ type Props = {
   isLoading?: boolean;
   disabled?: boolean;
   variant?: Variant;
+  leftIcon?: ReactNode;
   containerStyles?: StyleProp<ViewStyle>;
   textStyles?: StyleProp<TextStyle>;
 };
@@ -28,6 +31,7 @@ const CustomButton = ({
   isLoading = false,
   disabled = false,
   variant = 'primary',
+  leftIcon,
   containerStyles,
   textStyles,
 }: Props) => {
@@ -51,15 +55,18 @@ const CustomButton = ({
       {isLoading ? (
         <ActivityIndicator color={isSecondary ? colors.text.DEFAULT : colors.primary} />
       ) : (
-        <Text
-          style={[
-            styles.text,
-            isSecondary ? styles.textSecondary : styles.textPrimary,
-            textStyles,
-          ]}
-        >
-          {title}
-        </Text>
+        <View style={styles.content}>
+          {leftIcon ? <View style={styles.iconWrap}>{leftIcon}</View> : null}
+          <Text
+            style={[
+              styles.text,
+              isSecondary ? styles.textSecondary : styles.textPrimary,
+              textStyles,
+            ]}
+          >
+            {title}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
@@ -72,6 +79,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   primary: {
     backgroundColor: colors.accent.orange,
