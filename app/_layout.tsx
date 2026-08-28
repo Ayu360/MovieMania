@@ -3,14 +3,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Appearance } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 
 import { colors } from '@/constants';
 import useAuthStore from '@/store/authStore';
 
 // Force dark mode at runtime so iOS never paints its default light system
 // backgrounds (source of the white flash during tab switches).
-Appearance.setColorScheme('dark');
+// react-native-web doesn't implement setColorScheme, so skip on web.
+if (Platform.OS !== 'web') {
+  Appearance.setColorScheme('dark');
+}
 
 const queryClient = new QueryClient();
 
