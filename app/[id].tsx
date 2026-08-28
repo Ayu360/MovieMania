@@ -15,11 +15,12 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets, type EdgeInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchSelectedMovie } from '@/api/fetchData';
 import { colors } from '@/constants';
+import FloatingBackButton from '@/components/FloatingBackButton';
 import useMoviesStore from '@/store/moviesStore';
 import type { MovieDetail, MovieDetailResponse } from '@/types/omdb';
 
@@ -244,22 +245,6 @@ const Section = ({ title, body, plot }: SectionProps) => (
     <Text style={styles.sectionTitle}>{title}</Text>
     <Text style={plot ? styles.plot : styles.sectionBody}>{body}</Text>
   </View>
-);
-
-const FloatingBackButton = ({ topInset }: { topInset: number }) => (
-  <Pressable
-    onPress={() => router.back()}
-    hitSlop={12}
-    style={({ pressed }) => [
-      styles.backBtn,
-      { top: topInset + 8 },
-      pressed && { opacity: 0.6 },
-    ]}
-    accessibilityRole="button"
-    accessibilityLabel="Back"
-  >
-    <Text style={styles.backChevron}>‹</Text>
-  </Pressable>
 );
 
 const MovieDetailSkeleton = () => (
@@ -498,27 +483,6 @@ const styles = StyleSheet.create({
   },
   actionBtnTextAdded: {
     color: colors.accent.green,
-  },
-  backBtn: {
-    position: 'absolute',
-    left: 16,
-    zIndex: 10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(20, 24, 28, 0.55)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backChevron: {
-    color: colors.text.DEFAULT,
-    fontSize: 28,
-    lineHeight: 30,
-    fontWeight: '400',
-    marginTop: -2,
-    marginLeft: -2,
   },
   skeletonBg: {
     backgroundColor: colors.surface,

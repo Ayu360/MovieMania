@@ -9,7 +9,7 @@ import {
   isSuccessResponse,
 } from '@react-native-google-signin/google-signin';
 
-import { postFirebaseToken } from '@/api/authApi';
+import { deleteMe, postFirebaseToken } from '@/api/authApi';
 import useAuthStore, { type User } from '@/store/authStore';
 
 GoogleSignin.configure({
@@ -53,5 +53,31 @@ export async function signOut(): Promise<void> {
     // ignore — user may not be signed in with Google
   }
   await firebaseSignOut(getAuth());
+  useAuthStore.getState().logout();
+}
+
+export async function deleteAccount(): Promise<void> {
+  const appToken = useAuthStore.getState().appToken;
+  if (!appToken) {
+    throw new Error('Not signed in');
+  }
+
+  // Backend deletes both the Mongo record and the Firebase user.
+  await deleteMe(appToken);
+
+  // The Firebase account is already gone server-side — just clear the
+  // local session so the client SDK doesn't hold a stale token.
+  try {
+    await firebaseSignOut(getAuth());
+  } catch {
+    // ignore
+  }
+
+  try {
+    await GoogleSignin.revokeAccess();
+  } catch {
+    // ignore — Google grant may already be gone
+  }
+
   useAuthStore.getState().logout();
 }

@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -10,28 +9,44 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 
 import SearchBar from '@/components/SearchBar';
 import PosterTile from '@/components/PosterTile';
+import Avatar from '@/components/Avatar';
 import { fetchMovies } from '@/api/fetchData';
-import { colors, icons } from '@/constants';
-import { signOut } from '@/lib/auth/firebase';
+import { colors } from '@/constants';
+import useAuthStore from '@/store/authStore';
 import type { SearchResponse, SearchResult } from '@/types/omdb';
 
 const SKELETON_COUNT = 6;
 const GRID_GUTTER = 12;
+const SEARCH_DEBOUNCE_MS = 400;
+const MIN_QUERY_LENGTH = 3;
+const DEFAULT_QUERY = 'batman';
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [movieName, setMovieName] = useState('batman');
+  const [debouncedQuery, setDebouncedQuery] = useState(DEFAULT_QUERY);
   const insets = useSafeAreaInsets();
   const listBottomPad = 56 + (insets.bottom || 12) + 20;
+  const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const trimmed = searchQuery.trim();
+      setDebouncedQuery(trimmed.length === 0 ? DEFAULT_QUERY : trimmed);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const canSearch = debouncedQuery.length >= MIN_QUERY_LENGTH;
 
   const { data, status, error, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
     useInfiniteQuery<SearchResponse, Error>({
-      queryKey: ['movies', movieName],
+      queryKey: ['movies', debouncedQuery],
       queryFn: ({ pageParam }) =>
-        fetchMovies(`s=${encodeURIComponent(movieName)}`, pageParam as number),
+        fetchMovies(`s=${encodeURIComponent(debouncedQuery)}`, pageParam as number),
       initialPageParam: 1,
       getNextPageParam: (lastPage, allPages) => {
         if (lastPage.Response !== 'True') return undefined;
@@ -42,7 +57,7 @@ const Home = () => {
         const total = Number(lastPage.totalResults ?? 0);
         return loaded < total ? allPages.length + 1 : undefined;
       },
-      enabled: movieName.length > 0,
+      enabled: canSearch,
       placeholderData: keepPreviousData,
     });
 
@@ -58,7 +73,7 @@ const Home = () => {
 
   const handleSubmit = () => {
     const trimmed = searchQuery.trim();
-    if (trimmed.length > 0) setMovieName(trimmed);
+    setDebouncedQuery(trimmed.length === 0 ? DEFAULT_QUERY : trimmed);
   };
 
   return (
@@ -70,13 +85,13 @@ const Home = () => {
             <Text style={styles.subtitle}>Find your next movie</Text>
           </View>
           <Pressable
-            onPress={signOut}
+            onPress={() => router.push('/profile')}
             hitSlop={12}
-            style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.6 }]}
+            style={({ pressed }) => pressed && { opacity: 0.6 }}
             accessibilityRole="button"
-            accessibilityLabel="Log out"
+            accessibilityLabel="Open profile"
           >
-            <Image source={icons.logout} style={styles.logoutIcon} resizeMode="contain" />
+            <Avatar photoURL={user?.photoURL} name={user?.name} size={40} />
           </Pressable>
         </View>
         <View style={styles.searchWrap}>
@@ -94,7 +109,12 @@ const Home = () => {
         </View>
       </View>
 
-      {status === 'pending' ? (
+      {!canSearch ? (
+        <EmptyState
+          title="Search movies"
+          subtitle={`Type at least ${MIN_QUERY_LENGTH} characters to search.`}
+        />
+      ) : status === 'pending' ? (
         <SkeletonGrid />
       ) : status === 'error' ? (
         <EmptyState
@@ -104,7 +124,7 @@ const Home = () => {
       ) : isEmpty ? (
         <EmptyState
           title="No results"
-          subtitle={`Nothing matched “${movieName}”. Try another title.`}
+          subtitle={`Nothing matched “${debouncedQuery}”. Try another title.`}
         />
       ) : (
         <FlatList
@@ -171,7 +191,7 @@ const styles = StyleSheet.create({
   },
   heroTop: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
@@ -188,21 +208,6 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
     fontSize: 14,
     marginTop: 2,
-  },
-  logoutBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-  },
-  logoutIcon: {
-    width: 18,
-    height: 18,
-    tintColor: colors.text.muted,
   },
   searchWrap: {
     marginBottom: 20,
