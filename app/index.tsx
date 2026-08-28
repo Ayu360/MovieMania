@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -9,12 +9,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, router } from 'expo-router';
+import { Redirect } from 'expo-router';
+import { AntDesign } from '@expo/vector-icons';
 
 import { colors, images } from '@/constants';
 import posters from '@/constants/posters';
 import CustomButton from '@/components/CustomButton';
 import useAuthStore from '@/store/authStore';
+import { signInWithGoogle } from '@/lib/auth/firebase';
 
 const POSTER_WIDTH = 110;
 const POSTER_HEIGHT = 165;
@@ -77,6 +79,19 @@ const PosterRow = ({ direction = 'left', speed = 1 }: PosterRowProps) => {
 
 const RootIndex = () => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleGoogle = async () => {
+    setSubmitting(true);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      Alert.alert('Sign-in failed', message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Slow scale in/out on the blurred backdrop for a cinematic "moving still" feel.
   const backdropScale = useSharedValue(1);
@@ -137,8 +152,10 @@ const RootIndex = () => {
 
         <View style={styles.actions}>
           <CustomButton
-            title="Continue with Email"
-            handlePress={() => router.push('/(auth)')}
+            title="Continue with Google"
+            handlePress={handleGoogle}
+            isLoading={submitting}
+            leftIcon={<AntDesign name="google" size={18} color={colors.primary} />}
           />
         </View>
       </SafeAreaView>
