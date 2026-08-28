@@ -15,7 +15,7 @@ import SearchBar from '@/components/SearchBar';
 import PosterTile from '@/components/PosterTile';
 import { fetchMovies } from '@/api/fetchData';
 import { colors, icons } from '@/constants';
-import useAuthStore from '@/store/authStore';
+import { signOut } from '@/lib/auth/firebase';
 import type { SearchResponse, SearchResult } from '@/types/omdb';
 
 const SKELETON_COUNT = 6;
@@ -26,7 +26,6 @@ const Home = () => {
   const [movieName, setMovieName] = useState('batman');
   const insets = useSafeAreaInsets();
   const listBottomPad = 56 + (insets.bottom || 12) + 20;
-  const logout = useAuthStore((s) => s.logout);
 
   const { data, status, error, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
     useInfiniteQuery<SearchResponse, Error>({
@@ -71,7 +70,7 @@ const Home = () => {
             <Text style={styles.subtitle}>Find your next movie</Text>
           </View>
           <Pressable
-            onPress={logout}
+            onPress={signOut}
             hitSlop={12}
             style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.6 }]}
             accessibilityRole="button"
