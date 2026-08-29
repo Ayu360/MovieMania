@@ -17,6 +17,7 @@ import posters from '@/constants/posters';
 import CustomButton from '@/components/CustomButton';
 import useAuthStore from '@/store/authStore';
 import { signInWithGoogle } from '@/lib/auth/firebase';
+import { log } from '@/lib/logger';
 
 const POSTER_WIDTH = 110;
 const POSTER_HEIGHT = 165;
@@ -82,11 +83,13 @@ const RootIndex = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const handleGoogle = async () => {
+    log.info('AUTH', 'sign-in button pressed');
     setSubmitting(true);
     try {
       await signInWithGoogle();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
+      log.error('AUTH', 'sign-in failed', { message });
       Alert.alert('Sign-in failed', message);
     } finally {
       setSubmitting(false);

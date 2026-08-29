@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -15,6 +13,7 @@ import Avatar from '@/components/Avatar';
 import FloatingBackButton from '@/components/FloatingBackButton';
 import { colors } from '@/constants';
 import { deleteAccount, signOut } from '@/lib/auth/firebase';
+import { useConfirm } from '@/lib/confirm';
 import useAuthStore from '@/store/authStore';
 
 const DELETE_RED = '#E5484D';
@@ -22,40 +21,37 @@ const DELETE_RED = '#E5484D';
 const Profile = () => {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const confirm = useConfirm();
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await confirm({
+        title: 'Log out?',
+        message: 'You will need to sign in again to access your watchlist.',
+        confirmLabel: 'Log out',
+        onConfirm: signOut,
+      });
     } catch (err) {
       Alert.alert('Could not log out', err instanceof Error ? err.message : String(err));
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete account?',
-      'This permanently removes your account, watchlist, and profile data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeleting(true);
-            try {
-              await deleteAccount();
-            } catch (err) {
-              setIsDeleting(false);
-              Alert.alert(
-                'Could not delete account',
-                err instanceof Error ? err.message : String(err),
-              );
-            }
-          },
-        },
-      ],
-    );
+  const handleDelete = async () => {
+    try {
+      await confirm({
+        title: 'Delete account?',
+        message:
+          'This permanently removes your account, watchlist, and profile data. This cannot be undone.',
+        confirmLabel: 'Delete',
+        destructive: true,
+        onConfirm: deleteAccount,
+      });
+    } catch (err) {
+      Alert.alert(
+        'Could not delete account',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
   };
 
   return (
@@ -89,16 +85,11 @@ const Profile = () => {
 
           <Pressable
             onPress={handleDelete}
-            disabled={isDeleting}
             style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.6 }]}
             accessibilityRole="button"
             accessibilityLabel="Delete account"
           >
-            {isDeleting ? (
-              <ActivityIndicator color={DELETE_RED} />
-            ) : (
-              <Text style={styles.deleteText}>Delete account</Text>
-            )}
+            <Text style={styles.deleteText}>Delete account</Text>
           </Pressable>
         </View>
       </ScrollView>

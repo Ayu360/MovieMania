@@ -36,3 +36,6 @@ google-services.json
 # Claude Code local session state
 .claude/settings.local.json
 .claude/*.lock
+
+# EAS build config (local — not committed)
+eas.json
