@@ -37,5 +37,5 @@ google-services.json
 .claude/settings.local.json
 .claude/*.lock
 
-# EAS build config (local — not committed)
-eas.json
+# # EAS build config (local — not committed)
+# eas.json
