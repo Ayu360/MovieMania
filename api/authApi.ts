@@ -1,3 +1,5 @@
+import { log } from '@/lib/logger';
+
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export type BackendUser = {
@@ -19,6 +21,7 @@ export async function postFirebaseToken(
   if (!BACKEND_URL) {
     throw new Error('EXPO_PUBLIC_BACKEND_URL is not set');
   }
+  log.info('API', 'POST /auth/firebase start');
   const res = await fetch(`${BACKEND_URL}/auth/firebase`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -26,34 +29,47 @@ export async function postFirebaseToken(
   });
   if (!res.ok) {
     const message = await res.text();
+    log.error('API', 'POST /auth/firebase failed', { status: res.status, message });
     throw new Error(`Backend rejected sign-in (${res.status}): ${message}`);
   }
-  return (await res.json()) as PostFirebaseTokenResponse;
+  const json = (await res.json()) as PostFirebaseTokenResponse;
+  log.info('API', 'POST /auth/firebase ok', {
+    status: res.status,
+    appUid: json.appUid,
+  });
+  return json;
 }
 
 export async function fetchMe(appToken: string): Promise<BackendUser & { appUid: string }> {
   if (!BACKEND_URL) {
     throw new Error('EXPO_PUBLIC_BACKEND_URL is not set');
   }
+  log.info('API', 'GET /me start');
   const res = await fetch(`${BACKEND_URL}/me`, {
     headers: { Authorization: `Bearer ${appToken}` },
   });
   if (!res.ok) {
+    log.error('API', 'GET /me failed', { status: res.status });
     throw new Error(`GET /me failed: ${res.status}`);
   }
-  return (await res.json()) as BackendUser & { appUid: string };
+  const json = (await res.json()) as BackendUser & { appUid: string };
+  log.info('API', 'GET /me ok', { status: res.status, appUid: json.appUid });
+  return json;
 }
 
 export async function deleteMe(appToken: string): Promise<void> {
   if (!BACKEND_URL) {
     throw new Error('EXPO_PUBLIC_BACKEND_URL is not set');
   }
+  log.info('API', 'DELETE /me start');
   const res = await fetch(`${BACKEND_URL}/me`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${appToken}` },
   });
   if (!res.ok) {
     const message = await res.text();
+    log.error('API', 'DELETE /me failed', { status: res.status, message });
     throw new Error(`DELETE /me failed (${res.status}): ${message}`);
   }
+  log.info('API', 'DELETE /me ok', { status: res.status });
 }
