@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Appearance, Platform } from 'react-native';
 
 import { colors } from '@/constants';
+import { useNotificationBootstrap } from '@/hooks/useNotificationBootstrap';
 import { ConfirmProvider } from '@/lib/confirm';
 import useAuthStore from '@/store/authStore';
 
@@ -20,6 +21,7 @@ const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  useNotificationBootstrap();
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.primary }}>

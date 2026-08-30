@@ -14,8 +14,12 @@ import { router } from 'expo-router';
 import SearchBar from '@/components/SearchBar';
 import PosterTile from '@/components/PosterTile';
 import Avatar from '@/components/Avatar';
+import NotificationPermissionCard from '@/components/NotificationPermissionCard';
 import { fetchMovies } from '@/api/fetchData';
 import { colors } from '@/constants';
+import { usePermissionCardVisible } from '@/hooks/usePermissionCardVisible';
+import { useConfirm } from '@/lib/confirm';
+import { openSettingsForNotifications } from '@/lib/notifications';
 import useAuthStore from '@/store/authStore';
 import type { SearchResponse, SearchResult } from '@/types/omdb';
 
@@ -31,6 +35,21 @@ const Home = () => {
   const insets = useSafeAreaInsets();
   const listBottomPad = 56 + (insets.bottom || 12) + 20;
   const user = useAuthStore((s) => s.user);
+  const { visible: notifCardVisible, dismiss: dismissNotifCard } =
+    usePermissionCardVisible();
+  const confirm = useConfirm();
+
+  const handleEnableNotifications = async () => {
+    const ok = await confirm({
+      title: 'Enable notifications',
+      message:
+        'MovieMania needs system permission to send notifications. Open Settings to turn them on?',
+      confirmLabel: 'Open Settings',
+    });
+    if (ok) {
+      await openSettingsForNotifications();
+    }
+  };
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -138,6 +157,14 @@ const Home = () => {
             if (hasNextPage && !isFetchingNextPage) fetchNextPage();
           }}
           onEndReachedThreshold={0.6}
+          ListHeaderComponent={
+            notifCardVisible ? (
+              <NotificationPermissionCard
+                onEnable={handleEnableNotifications}
+                onDismiss={dismissNotifCard}
+              />
+            ) : null
+          }
           ListFooterComponent={
             isFetchingNextPage ? (
               <View style={styles.footer}>
