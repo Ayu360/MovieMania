@@ -23,12 +23,12 @@ expo-env.d.ts
 ios/
 android/
 
-# Firebase config (project-specific, contains identifiers)
+# Firebase iOS config (only exclude the iOS one — Android's google-services.json
+# is untracked-but-required for the build to succeed)
 GoogleService-Info.plist
-google-services.json
 
-# Local env
-.env
+# Local env source files (only .env is read at bundle time — the .env.dev/.env.prod
+# are just copy sources for yarn env:dev / yarn env:prod)
 .env.local
 .env.dev
 .env.prod
@@ -36,11 +36,3 @@ google-services.json
 # Claude Code local session state
 .claude/settings.local.json
 .claude/*.lock
-
-# Local build artifacts from `eas build --local`
-*.apk
-*.aab
-build-*.apk
-
-# # EAS build config (local — not committed)
-# eas.json
