@@ -42,6 +42,7 @@ export default function RootLayout() {
                 <Stack.Screen name="profile" options={{ headerShown: false }} />
                 <Stack.Screen name="terms" options={{ headerShown: false }} />
                 <Stack.Screen name="contact" options={{ headerShown: false }} />
+                <Stack.Screen name="developer" options={{ headerShown: false }} />
               </Stack.Protected>
             </Stack>
           </QueryClientProvider>

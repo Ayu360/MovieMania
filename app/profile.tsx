@@ -71,6 +71,8 @@ const Profile = () => {
           <Row label="Terms & Conditions" onPress={() => router.push('/terms')} />
           <View style={styles.divider} />
           <Row label="Developer Contact" onPress={() => router.push('/contact')} />
+          <View style={styles.divider} />
+          <Row label="About the Developer" onPress={() => router.push('/developer')} />
         </View>
 
         <View style={styles.actions}>
