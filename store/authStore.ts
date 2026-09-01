@@ -16,8 +16,10 @@ type AuthState = {
   user: User | null;
   appToken: string | null;
   isLoggedIn: boolean;
+  hasAskedForNotifications: boolean;
   signIn: (payload: { user: User; appToken: string }) => void;
   logout: () => void;
+  markNotificationPermissionAsked: () => void;
 };
 
 const useAuthStore = create<AuthState>()(
@@ -26,6 +28,7 @@ const useAuthStore = create<AuthState>()(
       user: null,
       appToken: null,
       isLoggedIn: false,
+      hasAskedForNotifications: false,
       signIn: ({ user, appToken }) => {
         log.info('STORE', 'auth signIn', { appUid: user.appUid });
         set({ user, appToken, isLoggedIn: true });
@@ -33,6 +36,10 @@ const useAuthStore = create<AuthState>()(
       logout: () => {
         log.info('STORE', 'auth logout');
         set({ user: null, appToken: null, isLoggedIn: false });
+      },
+      markNotificationPermissionAsked: () => {
+        log.debug('STORE', 'markNotificationPermissionAsked');
+        set({ hasAskedForNotifications: true });
       },
     }),
     {
@@ -42,6 +49,7 @@ const useAuthStore = create<AuthState>()(
         user: state.user,
         appToken: state.appToken,
         isLoggedIn: state.isLoggedIn,
+        hasAskedForNotifications: state.hasAskedForNotifications,
       }),
     },
   ),

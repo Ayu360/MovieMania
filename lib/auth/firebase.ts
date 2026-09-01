@@ -11,6 +11,7 @@ import {
 
 import { deleteMe, postFirebaseToken } from '@/api/authApi';
 import { log } from '@/lib/logger';
+import { unregisterCurrentDevice } from '@/lib/notifications';
 import useAuthStore, { type User } from '@/store/authStore';
 
 GoogleSignin.configure({
@@ -72,6 +73,13 @@ export async function signInWithGoogle(): Promise<void> {
 export async function signOut(): Promise<void> {
   log.info('AUTH', 'signOut start');
   try {
+    await unregisterCurrentDevice();
+  } catch (err) {
+    log.warn('AUTH', 'notification unregister failed on signOut', {
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+  try {
     await GoogleSignin.signOut();
     log.debug('AUTH', 'google signOut ok');
   } catch {
@@ -96,6 +104,14 @@ export async function deleteAccount(): Promise<void> {
   if (!appToken) {
     log.error('DELETE_ACCOUNT', 'no appToken in store');
     throw new Error('Not signed in');
+  }
+
+  try {
+    await unregisterCurrentDevice();
+  } catch (err) {
+    log.warn('DELETE_ACCOUNT', 'notification unregister failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
   }
 
   // Backend deletes both the Mongo record and the Firebase user.

@@ -57,6 +57,65 @@ export async function fetchMe(appToken: string): Promise<BackendUser & { appUid:
   return json;
 }
 
+export type DeviceTokenPayload = {
+  token: string;
+  platform: 'ios' | 'android';
+  appVersion: string;
+};
+
+export async function registerDeviceToken(
+  appToken: string,
+  payload: DeviceTokenPayload,
+): Promise<void> {
+  if (!BACKEND_URL) {
+    throw new Error('EXPO_PUBLIC_BACKEND_URL is not set');
+  }
+  log.info('API', 'POST /devices/tokens start', { platform: payload.platform });
+  const res = await fetch(`${BACKEND_URL}/devices/tokens`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${appToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const message = await res.text();
+    log.error('API', 'POST /devices/tokens failed', {
+      status: res.status,
+      message,
+    });
+    throw new Error(`Register device token failed (${res.status}): ${message}`);
+  }
+  log.info('API', 'POST /devices/tokens ok', { status: res.status });
+}
+
+export async function unregisterDeviceToken(
+  appToken: string,
+  token: string,
+): Promise<void> {
+  if (!BACKEND_URL) {
+    throw new Error('EXPO_PUBLIC_BACKEND_URL is not set');
+  }
+  log.info('API', 'DELETE /devices/tokens start');
+  const res = await fetch(
+    `${BACKEND_URL}/devices/tokens/${encodeURIComponent(token)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${appToken}` },
+    },
+  );
+  if (!res.ok && res.status !== 404) {
+    const message = await res.text();
+    log.error('API', 'DELETE /devices/tokens failed', {
+      status: res.status,
+      message,
+    });
+    throw new Error(`Unregister device token failed (${res.status}): ${message}`);
+  }
+  log.info('API', 'DELETE /devices/tokens ok', { status: res.status });
+}
+
 export async function deleteMe(appToken: string): Promise<void> {
   if (!BACKEND_URL) {
     throw new Error('EXPO_PUBLIC_BACKEND_URL is not set');
