@@ -41,6 +41,7 @@
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "./plugins/withDisableRNFirebaseSPM",
+      "./plugins/withFirebaseNotificationColorFix",
       [
         "expo-build-properties",
         {
