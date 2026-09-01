@@ -23,6 +23,10 @@ expo-env.d.ts
 ios/
 android/
 
+# Local build artifacts
+*.apk
+*.aab
+
 # Firebase config (project-specific, contains identifiers)
 GoogleService-Info.plist
 google-services.json
